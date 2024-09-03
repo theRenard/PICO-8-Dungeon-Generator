@@ -47,16 +47,7 @@ generator = class:extend({
         --     _regions = new Array2D(stage.width, stage.height);
 
         addRooms(_ENV)
-        -- -- fill in all of the empty space with mazes
-        -- for y = 0, stage.h - 1, 2 do
-        --     for x = 0, stage.w - 1, 2 do
-        --         local pos = { x = x, y = y }
-        --         local tileType = getTile(_ENV, pos)
-        --         if tileType == wallTile then
-        --             -- growMaze(_ENV, pos)
-        --         end
-        --     end
-        -- end
+        createMaze(_ENV)
 
         -- connectRegions();
         -- removeDeadEnds();
@@ -97,10 +88,10 @@ generator = class:extend({
         for y = 0, stage.h - 1 do
             for x = 0, stage.w - 1 do
                 if stage.tiles[y][x] == wallTile then
-                    pset(x, y, 7)
+                    pset(x+10, y+10, 7)
                 end
                 if stage.tiles[y][x] == floorTile then
-                    pset(x, y, 8)
+                    pset(x+10, y+10, 8)
                 end
             end
         end
@@ -114,35 +105,59 @@ generator = class:extend({
         end
     end,
 
+    createMaze = function(_ENV)
+        -- fill in all of the empty space with mazes
+        -- for y = 0, stage.h - 1, 2 do
+        --     for x = 0, stage.w - 1, 2 do
+        --         local pos = { x = x, y = y }
+        --         local tileType = getTile(_ENV, pos)
+        --         if tileType == wallTile then
+        --             growMaze(_ENV, pos)
+        --         end
+        --     end
+        -- end
+        growMaze(_ENV, { x = 32, y = 32 })
+    end,
+
     -- Implementation of the "growing tree" algorithm from here:
     -- http://www.astrolog.org/labyrnth/algrithm.htm.
     growMaze = function(_ENV, pos)
         local cells = {}
-        local lastDir = { x = 0, y = 0 }
+        local lastDir = nil
+
         startRegion(_ENV)
         carve(_ENV, pos)
+
         add(cells, pos)
-        while #cells > 0 do
+
+        while #cells > 0 and #cells < 10000 do
             local cell = cells[#cells]
             local unmadeCells = {}
+
             for dir in all(Direction.CARDINAL) do
                 if canCarve(_ENV, cell, dir) then
                     add(unmadeCells, dir)
                 end
             end
+
+            pq(#cells)
+
             if #unmadeCells > 0 then
                 local dir
-                if contains(unmadeCells, lastDir) and rnd(100) > windingPercent then
+
+                if vecContains(unmadeCells, lastDir) and rnd(100) > windingPercent then
                     dir = lastDir
                 else
-                    dir = unmadeCells[rnd(#unmadeCells)]
                 end
+                dir = unmadeCells[intRnd(#unmadeCells)]
+
                 carve(_ENV, vecSumAndMlt(cell, dir))
-                carve(_ENV, vecSumAndMlt(cell, dir, 2))
-                add(cells, vecSumAndMlt(cell, dir, 2))
+                carve(_ENV, vecSumAndMlt(cell, dir))
+
+                add(cells, vecSumAndMlt(cell, dir))
                 lastDir = dir
             else
-                cells[#cells] = nil
+                del(cells, cell)
                 lastDir = nil
             end
         end
@@ -150,8 +165,8 @@ generator = class:extend({
 
     addRooms = function(_ENV)
         for i = 0, numRoomTries do
-            local size = 1 + ceil(rnd(2 + roomExtraSize)) * 2 + 1
-            local rectangularity = ceil(rnd(1 + size / 2)) * 2
+            local size = intRnd(2 + roomExtraSize) * 2 + 5
+            local rectangularity = intRnd(1 + size / 2) * 2
             local w = size
             local h = size
             if oneIn(2) then
@@ -159,9 +174,9 @@ generator = class:extend({
             else
                 h += rectangularity
             end
-            local x = rnd((stage.w - 1 - w) / 2) * 2 + 1
-            local y = rnd((stage.h - 1 - h) / 2) * 2 + 1
-            local room = { x = flr(x), y = flr(y), w = flr(w), h = flr(h) }
+            local x = intRnd((stage.w - 1 - w) / 2) * 2 + 1
+            local y = intRnd((stage.h - 1 - h) / 2) * 2 + 1
+            local room = { x = x, y = y, w = w, h = h }
             local overlaps = false
             for other in all(rooms) do
                 if distanceTo(room, other) <= 0 then
@@ -171,7 +186,6 @@ generator = class:extend({
             end
             if not overlaps then
                 -- rect(room.x, room.y, room.x + room.w, room.y + room.h, 3)
-                pq(room.x, room.y, room.w, room.h)
                 add(rooms, room)
                 startRegion(_ENV)
                 local positions = getAllTilePositions(room)
@@ -195,6 +209,7 @@ generator = class:extend({
     end,
 
     setTile = function(_ENV, pos, tileType)
+        -- pq(pos.x, pos.y)
         stage.tiles[pos.y][pos.x] = tileType
     end,
 
@@ -231,5 +246,5 @@ generator = class:extend({
         end
         setTile(_ENV, pos, tileType)
         -- regions[pos.y][pos.x] = currentRegion
-    end,
+    end
 })

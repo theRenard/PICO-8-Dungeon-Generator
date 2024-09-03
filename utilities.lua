@@ -96,9 +96,31 @@ function getAllTilePositions(room)
 end
 
 -- contains
-function contains(t, v)
-	for i = 1, #t do
-		if t[i] == v then return true end
+function vecContains(vectors, vec)
+	pq(vectors, vec)
+	if vec == nil then
+		return false
+	end
+	for i = 1, #vectors do
+		if vectors[i] == nil then
+			return false
+		end
+		if vectors[i].x == vec.x and vectors[i].y == vec.y then
+			return true
+		end
+	end
+	return false
+end
+
+function intRnd(n)
+	return flr(rnd(n))
+end
+
+function isNotEmpty(arr)
+	for i = 1, #arr do
+		if arr[i] ~= nil then
+			return true
+		end
 	end
 	return false
 end
@@ -110,7 +132,7 @@ function vecSumAndMlt(vec1, vec2, scalar)
 	elseif vec2 == nil then
 		return { x = vec1.x * scalar, y = vec1.y * scalar }
 	else
-		return { x = (vec1.x + vec2.x * scalar), y = (vec1.y + vec2.y  * scalar) }
+		return { x = vec1.x + (vec2.x * scalar), y = vec1.y + (vec2.y  * scalar) }
 	end
 end
 

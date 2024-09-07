@@ -6,10 +6,7 @@ __lua__
 
 #include debug.lua
 #include utilities.lua
-#include class.lua
-#include generator.lua
-#include scenes.lua
-#include entities.lua
+#include growing-tree.lua
 #include main.lua
 
 __gfx__

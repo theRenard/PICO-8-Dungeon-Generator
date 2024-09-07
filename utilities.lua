@@ -97,7 +97,6 @@ end
 
 -- contains
 function vecContains(vectors, vec)
-	pq(vectors, vec)
 	if vec == nil then
 		return false
 	end

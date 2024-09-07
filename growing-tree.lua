@@ -1,5 +1,5 @@
 cls()
-numRoomTries = 100
+numRoomTries = 1000
 roomExtraSize = 2
 floorTile = 1
 emptyTile = 0
@@ -45,8 +45,8 @@ function createRooms()
         else
             h += rectangularity
         end
-        local x = intRnd((stage.w - 1 - w) / 2) * 2 + 1
-        local y = intRnd((stage.h - 1 - h) / 2) * 2 + 1
+        local x = intRnd((stage.w - w) / 2) * 2 + 1
+        local y = intRnd((stage.h + 1 - h) / 2) * 2 + 1
         local room = { x = x, y = y, w = w, h = h }
         local overlaps = false
         for other in all(stage.rooms) do
@@ -57,7 +57,7 @@ function createRooms()
         end
         if not overlaps then
             -- rect(room.x, room.y, room.x + room.w, room.y + room.h, 3)
-            add(rooms, room)
+            add(stage.rooms, room)
             -- startRegion(_ENV)
             local positions = getAllTilePositions(room)
             for pos in all(positions) do
@@ -84,7 +84,7 @@ function carve(pos, tileType)
 end
 
 function setTile(pos, tileType)
-    pq(pos.x, pos.y)
+    -- pq(pos.x, pos.y)
     stage.tiles[pos.y][pos.x] = tileType
 end
 
@@ -97,7 +97,6 @@ end
 -- end
 
 createStage(127, 127)
-drawStage()
 createRooms()
 drawStage()
 -- createMap()

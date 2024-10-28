@@ -153,3 +153,11 @@ Direction = {
 		{ x = -1, y = -1 }
 	}
 }
+
+function shuffle(tbl)
+  for i = #tbl, 2, -1 do
+    local j = intRnd(i)
+    tbl[i], tbl[j] = tbl[j], tbl[i]
+  end
+  return tbl
+end

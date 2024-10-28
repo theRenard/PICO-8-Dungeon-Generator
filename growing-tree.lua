@@ -1,106 +1,97 @@
-cls()
-numRoomTries = 1000
-roomExtraSize = 2
-floorTile = 1
-emptyTile = 0
-wallTile = 2
-stage = {
-    rooms = {},
-    tiles = {},
+cls(9)
+
+local method = 3 -- chose_random, chose_oldest, chose_newest
+local dungeonWidth = 40
+local dungeonHeight = 40
+local dungeon = {}
+
+function resetDungeon()
+    for x = 0, dungeonWidth do
+        dungeon[x] = {}
+        for y = 0, dungeonHeight do
+            dungeon[x][y] = 0
+            -- dungeon[x][y] = rnd() > 0.05 and 0 or 4
+        end
+    end
+    rectfill(0, 0, dungeonWidth, dungeonHeight, 13)
+end
+
+function choseIndex(ceil)
+    if method == 1 then
+        return flr(rnd(ceil)) + 1
+    elseif method == 2 then
+        return 1
+    elseif method == 3 then
+        return ceil
+    end
+end
+
+resetDungeon()
+
+-- Step #2 create a list of cells to act as the seed for the growing tree algorithm.
+local cells = {}
+
+-- Step #3 choose a random cell from the dungeon.
+local randomCell = {
+    x = flr(rnd(dungeonWidth / 2)) * 2 + 1,
+    y = flr(rnd(dungeonHeight / 2)) * 2 + 1
 }
 
--- initialize stage
-function createStage(w, h)
-    stage.w = w
-    stage.h = h
-    stage.map = {}
-    for y = 0, stage.h do
-        stage.tiles[y] = {}
-        for x = 0, stage.w - 1 do
-            stage.tiles[y][x] = (x + y) % 2
+-- Step #4 add the random cell to the list of cells.
+add(cells, randomCell)
+
+-- Draw the dungeon
+function drawDungeon()
+    for y = 0, dungeonHeight do
+        for x = 0, dungeonWidth do
+            pset(x, y, dungeon[x][y])
+            -- rectangle of 8 x 20 pixels
+            rectfill(0, 120, 128, 128, 3)
+            print("Cells: " .. #cells, 0, 121, 7)
         end
+    end
+    -- flip
+    if rnd() > 0.999 then
+        flip()
     end
 end
 
-function drawStage()
-    for y = 0, stage.w do
-        for x = 0, stage.h do
-            pset(x, y, stage.tiles[x][y])
-            -- draw on screen every 10 pixels
-            if x == 0 and y % 2 == 0 then
-                flip()
-            end
-        end
-    end
+-- Carve function
+function carve(x, y, tile)
+    local tile = tile or 0
+    dungeon[x][y] = tile
 end
 
-function createRooms()
-    for i = 0, numRoomTries do
-        local size = intRnd(2 + roomExtraSize) * 2 + 5
-        local rectangularity = intRnd(1 + size / 2) * 2
-        local w = size
-        local h = size
-        if oneIn(2) then
-            w += rectangularity
-        else
-            h += rectangularity
-        end
-        local x = intRnd((stage.w - w) / 2) * 2 + 1
-        local y = intRnd((stage.h + 1 - h) / 2) * 2 + 1
-        local room = { x = x, y = y, w = w, h = h }
-        local overlaps = false
-        for other in all(stage.rooms) do
-            if distanceTo(room, other) <= 0 then
-                overlaps = true
+-- Step #5 while the list of cells is not empty, do the following:
+while #cells > 0 do
+    -- Step #6 choose a random cell from the list of cells.
+    local index = choseIndex(#cells)
+    local currentCell = cells[index]
+    -- Step #7 create a list of unvisited neighbors of the current cell.
+    for _, direction in pairs(shuffle(Direction.CARDINAL)) do
+        local neighbor = {
+            x = currentCell.x + direction.x,
+            y = currentCell.y + direction.y
+        }
+        local nextNeighbor = {
+            x = currentCell.x + direction.x * 2,
+            y = currentCell.y + direction.y * 2
+        }
+        if neighbor.x <= dungeonWidth - 1 and neighbor.y <= dungeonHeight - 1
+        and neighbor.x > 0 and neighbor.y > 0 then
+            if dungeon[neighbor.x][neighbor.y] == 0 and dungeon[nextNeighbor.x][nextNeighbor.y] == 0 then
+                carve(neighbor.x, neighbor.y, 7)
+                carve(nextNeighbor.x, nextNeighbor.y, 7)
+                add(cells, nextNeighbor)
+                drawDungeon()
+                index = nil
                 break
             end
         end
-        if not overlaps then
-            -- rect(room.x, room.y, room.x + room.w, room.y + room.h, 3)
-            add(stage.rooms, room)
-            -- startRegion(_ENV)
-            local positions = getAllTilePositions(room)
-            for pos in all(positions) do
-                carve(pos, 4)
-            end
-        end
+    end
+    if index then
+        del(cells, currentCell)
     end
 end
 
-function createMaze()
-
-end
-
-function carve(pos, tileType)
-    if tileType == nil then
-        tileType = floorTile
-    end
-    -- check bounds
-    if pos.x < 0 or pos.x >= stage.w or pos.y < 0 or pos.y >= stage.h then
-        return
-    end
-    setTile(pos, tileType)
-    -- regions[pos.y][pos.x] = currentRegion
-end
-
-function setTile(pos, tileType)
-    -- pq(pos.x, pos.y)
-    stage.tiles[pos.y][pos.x] = tileType
-end
-
--- function createMap()
---     for x = 0, stage.width do
---         for y = 0, stage.height do
---             -- mset(x, y, stage.map[x][y])
---         end
---     end
--- end
-
-createStage(127, 127)
-createRooms()
-drawStage()
--- createMap()
-
-function _draw()
-
-end
+_draw = drawDungeon

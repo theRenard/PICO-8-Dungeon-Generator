@@ -1,16 +1,29 @@
 cls(9)
 
 local method = 3 -- chose_random, chose_oldest, chose_newest
-local dungeonWidth = 40
-local dungeonHeight = 40
+local dungeonWidth = 60
+local dungeonHeight = 60
 local dungeon = {}
+local bouldersRatio = 0.001
+local wallTile = 0
+local emptyTile = 7
+local boulderTile = 4
+local maxRemovableDeadEnds = 600
 
-function resetDungeon()
+function doForAllTiles(callback)
+    for x = 0, dungeonWidth do
+        for y = 0, dungeonHeight do
+            callback(x, y)
+        end
+    end
+end
+
+function initDungeon()
     for x = 0, dungeonWidth do
         dungeon[x] = {}
         for y = 0, dungeonHeight do
-            dungeon[x][y] = 0
-            -- dungeon[x][y] = rnd() > 0.05 and 0 or 4
+            dungeon[x][y] = wallTile
+            dungeon[x][y] = rnd() > bouldersRatio and wallTile or boulderTile
         end
     end
     rectfill(0, 0, dungeonWidth, dungeonHeight, 13)
@@ -26,72 +39,119 @@ function choseIndex(ceil)
     end
 end
 
-resetDungeon()
+function isInBounds(tile, padding)
+    local padding = padding or 1
+    return tile.x <= dungeonWidth - padding and tile.y <= dungeonHeight - padding and tile.x > 0 and tile.y > 0
+end
 
--- Step #2 create a list of cells to act as the seed for the growing tree algorithm.
-local cells = {}
+function isWall(tile)
+    return dungeon[tile.x][tile.y] == wallTile or dungeon[tile.x][tile.y] == boulderTile
+end
 
--- Step #3 choose a random cell from the dungeon.
-local randomCell = {
-    x = flr(rnd(dungeonWidth / 2)) * 2 + 1,
-    y = flr(rnd(dungeonHeight / 2)) * 2 + 1
-}
+function isPath(tile)
+    return dungeon[tile.x][tile.y] == emptyTile
+end
 
--- Step #4 add the random cell to the list of cells.
-add(cells, randomCell)
+function canCarve(tile)
+    return isInBounds(tile) and isWall(tile)
+end
 
--- Draw the dungeon
-function drawDungeon()
-    for y = 0, dungeonHeight do
-        for x = 0, dungeonWidth do
-            pset(x, y, dungeon[x][y])
-            -- rectangle of 8 x 20 pixels
-            rectfill(0, 120, 128, 128, 3)
-            print("Cells: " .. #cells, 0, 121, 7)
+function createPerfectMaze()
+    -- Step #2 create a list of tiles to act as the seed for the growing tree algorithm.
+    local tiles = {}
+
+    -- Step #3 choose a random tile from the dungeon.
+    local randomTile = {
+        x = flr(rnd(dungeonWidth / 2)) * 2 + 1,
+        y = flr(rnd(dungeonHeight / 2)) * 2 + 1
+    }
+
+    -- Step #4 add the random tile to the list of tiles.
+    add(tiles, randomTile)
+
+    -- Step #5 while the list of tiles is not empty, do the following:
+    while #tiles > 0 do
+        -- Step #6 choose a random tile from the list of tiles.
+        local index = choseIndex(#tiles)
+        local currentTile = tiles[index]
+        -- Step #7 create a list of unvisited neighbors of the current tile.
+        for _, direction in pairs(shuffle(Direction.CARDINAL)) do
+            local neighborTile = {
+                x = currentTile.x + direction.x,
+                y = currentTile.y + direction.y
+            }
+            local nextNeighborTile = {
+                x = currentTile.x + direction.x * 2,
+                y = currentTile.y + direction.y * 2
+            }
+            if canCarve(neighborTile) and canCarve(nextNeighborTile) then
+                carve(neighborTile)
+                carve(nextNeighborTile)
+                add(tiles, nextNeighborTile)
+                -- drawDungeon(tiles)
+                index = nil
+                break
+            end
+        end
+        if index then
+            del(tiles, currentTile)
         end
     end
-    -- flip
-    if rnd() > 0.999 then
+end
+
+function removeDeadEnds()
+    local done = false
+    local removedTiles = 0
+    while not done do
+        done = true
+        doForAllTiles(function(x, y)
+            if isPath({ x = x, y = y }) then
+                local wall = 0
+                for _, direction in pairs(Direction.CARDINAL) do
+                    local neighborTile = {
+                        x = x + direction.x,
+                        y = y + direction.y
+                    }
+                    if isWall(neighborTile) then
+                        wall = wall + 1
+                    end
+                end
+                if wall == 3 then
+                    fill({ x = x, y = y })
+                    removedTiles = removedTiles + 1
+                    if removedTiles > maxRemovableDeadEnds then
+                        done = true
+                    else
+                        done = false
+                    end
+                end
+            end
+        end)
+        drawDungeon()
+    end
+end
+
+-- Draw the dungeon
+function drawDungeon(tiles)
+    doForAllTiles(function(x, y)
+        pset(x, y, dungeon[x][y])
+    end)
+    if rnd() > 0.99999 then
         flip()
     end
 end
 
 -- Carve function
-function carve(x, y, tile)
-    local tile = tile or 0
-    dungeon[x][y] = tile
+function carve(tile)
+    dungeon[tile.x][tile.y] = emptyTile
 end
 
--- Step #5 while the list of cells is not empty, do the following:
-while #cells > 0 do
-    -- Step #6 choose a random cell from the list of cells.
-    local index = choseIndex(#cells)
-    local currentCell = cells[index]
-    -- Step #7 create a list of unvisited neighbors of the current cell.
-    for _, direction in pairs(shuffle(Direction.CARDINAL)) do
-        local neighbor = {
-            x = currentCell.x + direction.x,
-            y = currentCell.y + direction.y
-        }
-        local nextNeighbor = {
-            x = currentCell.x + direction.x * 2,
-            y = currentCell.y + direction.y * 2
-        }
-        if neighbor.x <= dungeonWidth - 1 and neighbor.y <= dungeonHeight - 1
-        and neighbor.x > 0 and neighbor.y > 0 then
-            if dungeon[neighbor.x][neighbor.y] == 0 and dungeon[nextNeighbor.x][nextNeighbor.y] == 0 then
-                carve(neighbor.x, neighbor.y, 7)
-                carve(nextNeighbor.x, nextNeighbor.y, 7)
-                add(cells, nextNeighbor)
-                drawDungeon()
-                index = nil
-                break
-            end
-        end
-    end
-    if index then
-        del(cells, currentCell)
-    end
+function fill(tile)
+    dungeon[tile.x][tile.y] = wallTile
 end
+
+initDungeon()
+createPerfectMaze()
+removeDeadEnds()
 
 _draw = drawDungeon

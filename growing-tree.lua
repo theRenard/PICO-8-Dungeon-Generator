@@ -1,14 +1,17 @@
-cls(9)
+cls(0)
 
 local method = 3 -- chose_random, chose_oldest, chose_newest
-local dungeonWidth = 60
-local dungeonHeight = 60
+local dungeonWidth = 128
+local dungeonHeight = 128
 local dungeon = {}
-local bouldersRatio = 0.001
+local bouldersRatio = 0
 local wallTile = 0
 local emptyTile = 7
 local boulderTile = 4
-local maxRemovableDeadEnds = 600
+local maxRemovableDeadEnds = 2000
+local numRoomTries = 1000
+local roomExtraSize = 4
+local drawStep = true
 
 function doForAllTiles(callback)
     for x = 0, dungeonWidth do
@@ -56,18 +59,13 @@ function canCarve(tile)
     return isInBounds(tile) and isWall(tile)
 end
 
-function createPerfectMaze()
-    -- Step #2 create a list of tiles to act as the seed for the growing tree algorithm.
+function growMaze(startTile)
     local tiles = {}
 
-    -- Step #3 choose a random tile from the dungeon.
-    local randomTile = {
-        x = flr(rnd(dungeonWidth / 2)) * 2 + 1,
-        y = flr(rnd(dungeonHeight / 2)) * 2 + 1
-    }
-
     -- Step #4 add the random tile to the list of tiles.
-    add(tiles, randomTile)
+
+    carve(startTile)
+    add(tiles, startTile)
 
     -- Step #5 while the list of tiles is not empty, do the following:
     while #tiles > 0 do
@@ -88,13 +86,24 @@ function createPerfectMaze()
                 carve(neighborTile)
                 carve(nextNeighborTile)
                 add(tiles, nextNeighborTile)
-                -- drawDungeon(tiles)
+                if drawStep then drawDungeon() end
                 index = nil
                 break
             end
         end
         if index then
             del(tiles, currentTile)
+        end
+    end
+end
+
+function growMazes()
+    for x = 1, dungeonWidth, 2 do
+        for y = 1, dungeonHeight, 2 do
+            local tile = { x = x, y = y }
+            if isWall(tile) then
+                growMaze(tile)
+            end
         end
     end
 end
@@ -127,17 +136,52 @@ function removeDeadEnds()
                 end
             end
         end)
-        drawDungeon()
+        if drawStep then drawDungeon() end
+    end
+end
+
+function addRooms()
+    local rooms = {}
+    for i = 0, numRoomTries do
+        local size = intRnd(2 + roomExtraSize) * 2 + 5
+        local rectangularity = intRnd(1 + size / 2) * 2
+        local w = size
+        local h = size
+        if oneIn(2) then
+            w += rectangularity
+        else
+            h += rectangularity
+        end
+        local x = intRnd((dungeonWidth - 1 - w) / 2) * 2 + 1
+        local y = intRnd((dungeonHeight - 1 - h) / 2) * 2 + 1
+        local room = { x = x, y = y, w = w, h = h }
+        local overlaps = false
+        for other in all(rooms) do
+            if distanceTo(room, other) <= 0 then
+                overlaps = true
+                break
+            end
+        end
+        if not overlaps then
+            -- rect(room.x, room.y, room.x + room.w, room.y + room.h, 3)
+            add(rooms, room)
+            -- startRegion(_ENV)
+            local positions = getAllTilePositions(room)
+            for pos in all(positions) do
+                carve(pos)
+            end
+            if drawStep then drawDungeon() end
+        end
     end
 end
 
 -- Draw the dungeon
-function drawDungeon(tiles)
+function drawDungeon()
     doForAllTiles(function(x, y)
         pset(x, y, dungeon[x][y])
     end)
     if rnd() > 0.99999 then
-        flip()
+        -- flip()
     end
 end
 
@@ -150,8 +194,11 @@ function fill(tile)
     dungeon[tile.x][tile.y] = wallTile
 end
 
-initDungeon()
-createPerfectMaze()
-removeDeadEnds()
+_init = function()
+    initDungeon()
+    addRooms()
+    growMazes()
+    -- removeDeadEnds()
+end
 
 _draw = drawDungeon

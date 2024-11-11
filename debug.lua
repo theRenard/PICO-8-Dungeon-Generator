@@ -12,10 +12,10 @@ end
 -- usage:
 --   ?qq("p.x=",x,"p.y=",y)
 function qq(...)
-  local args=pack(...)
-  local s=""
-  for i=1,args.n do
-    s..=quote(args[i]).." "
+  local args = pack(...)
+  local s = ""
+  for i = 1, args.n do
+    s ..= quote(args[i]) .. " "
   end
   return s
 end
@@ -24,29 +24,49 @@ end
 -- like tostr() but for tables
 -- don't call this directly; call pq or qq instead
 function quote(t, depth)
-  depth=depth or 4 --avoid inf loop
-  if type(t)~="table" or depth<=0 then return tostr(t) end
+  depth = depth or 4
+  --avoid inf loop
+  if type(t) ~= "table" or depth <= 0 then return tostr(t) end
 
-  local s="{"
-  for k,v in pairs(t) do
-    s..=tostr(k).."="..quote(v,depth-1)..","
+  local s = "{"
+  for k, v in pairs(t) do
+    s ..= tostr(k) .. "=" .. quote(v, depth - 1) .. ","
   end
-  return s.."}"
+  return s .. "}"
 end
 
 -- like sprintf (from c)
 -- usage:
 --   ?qf("%/% is %%",3,8,3/8*100,"%")
-function qf(fmt,...)
-  local parts,args=split(fmt,"%"),pack(...)
-  local str=deli(parts,1)
-  for ix,pt in ipairs(parts) do
-    str..=quote(args[ix])..pt
+function qf(fmt, ...)
+  local parts, args = split(fmt, "%"), pack(...)
+  local str = deli(parts, 1)
+  for ix, pt in ipairs(parts) do
+    str ..= quote(args[ix]) .. pt
   end
-  if args.n~=#parts then
+  if args.n ~= #parts then
     -- uh oh! mismatched arg count
-    str..="(extraqf:"..(args.n-#parts)..")"
+    str ..= "(extraqf:" .. (args.n - #parts) .. ")"
   end
   return str
 end
 function pqf(...) printh(qf(...)) end
+
+--- converts anything to string
+function tostring(any)
+  if type(any) == "function" then return "function" end
+  if any == nil then return "nil" end
+  if type(any) == "string" then return any end
+  if type(any) == "boolean" then return any and "true" or "false" end
+  if type(any) == "number" then return "" .. any end
+  if type(any) == "table" then
+    -- recursion
+    local str = "{ "
+    for k, v in pairs(any) do
+      str = str .. tostring(v) .. " "
+    end
+    return str .. "}"
+  end
+  return "unkown"
+  -- should never show
+end

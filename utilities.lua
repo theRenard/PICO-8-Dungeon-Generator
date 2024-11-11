@@ -75,20 +75,24 @@ function distanceTo(room1, room2)
 	end
 end
 
--- overlaps
-function rectOverlaps(room, room2)
-	return room.x < room2.x + room2.w
-			and room.x + room.w > room2.x
-			and room.y < room2.y + room2.h
-			and room.y + room.h > room2.y
+-- Returns the distance between two points.
+function distanceBetween(p1, p2)
+	return flr(sqrt((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2))
 end
 
--- getAllTilePositions
-function getAllTilePositions(room)
-	-- return positions of all tiles in room
+-- overlaps
+function rectOverlaps(rect, rect2)
+	return rect.x < rect2.x + rect2.w
+			and rect.x + rect.w > rect2.x
+			and rect.y < rect2.y + rect2.h
+			and rect.y + rect.h > rect2.y
+end
+
+function getAllPositions(rect)
+	-- return positions of all tiles in rect
 	local positions = {}
-	for y = room.y, room.y + room.h - 1 do
-		for x = room.x, room.x + room.w - 1 do
+	for y = rect.y, rect.y + rect.h - 1 do
+		for x = rect.x, rect.x + rect.w - 1 do
 			add(positions, { x = x, y = y })
 		end
 	end
@@ -160,4 +164,103 @@ function shuffle(tbl)
     tbl[i], tbl[j] = tbl[j], tbl[i]
   end
   return tbl
+end
+
+--- Creates a 2D array with specified dimensions and initializes it with a given value.
+-- @param len1 The number of rows in the 2D array.
+-- @param len2 The number of columns in the 2D array.
+-- @param val The value to initialize each element of the array with. Defaults to nil if not provided.
+-- @return A 2D array with dimensions len1 x len2, initialized with the specified value.
+function create2dArray(len1, len2, val)
+	local arr = {}
+	for i = 0, len1 do
+			arr[i] = {}
+			for j = 0, len2 do
+					arr[i][j] = val or nil
+			end
+	end
+	return arr
+end
+
+function getRandomItem(arr)
+	return arr[intRnd(#arr) + 1]
+end
+
+function oneIn(n)
+	return rnd(n) < 1
+end
+
+function contains(table, value)
+	for _, v in pairs(table) do
+			if v == value then
+					return true
+			end
+	end
+	return false
+end
+
+function keys(table)
+	local keys = {}
+	for k, _ in pairs(table) do
+			add(keys, k)
+	end
+	return keys
+end
+
+function toList(table)
+	local list = {}
+	for _, v in pairs(table) do
+			add(list, v)
+	end
+	return list
+end
+
+function map(table, func)
+	local newTable = {}
+	for k, v in pairs(table) do
+			newTable[k] = func(v)
+	end
+	return newTable
+end
+
+function removeWhere(table, func)
+	for i = #table, 1, -1 do
+			if func(table[i]) then
+					del(table, i)
+			end
+	end
+end
+
+function toSet(table)
+	local set = {}
+	for _, v in pairs(table) do
+			set[v] = true
+	end
+	return set
+end
+
+function toVec(str)
+	local x = split(str, "_")[1]
+	local y = split(str, "_")[2]
+	return { x = x, y = y }
+end
+
+function toStr(x, y)
+	return x .. "_" .. y
+end
+
+function slice(table, start, finish)
+	local newTable = {}
+	for i = start, finish or #table do
+			add(newTable, table[i])
+	end
+	return newTable
+end
+
+function forEachArr2D(arr, callback)
+	for x = 0, #arr do
+			for y = 0, #arr[x] do
+					callback(x, y)
+			end
+	end
 end

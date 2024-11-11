@@ -36,13 +36,13 @@ Starting with a stage of solid walls, it works like so:
 --- region = number
 --- connector = string -- x_y
 
+local drawStep = true
 local method = 3 -- chose_random, chose_oldest, chose_newest
 local dungeonWidth = 128
 local dungeonHeight = 128
 local maxRemovableDeadEnds = 2000
 local numRoomTries = 1000
 local roomExtraSize = 4
-local drawStep = true
 local bouldersRatio = 0
 local extraConnectorChance = 20
 
@@ -109,7 +109,11 @@ end
 
 function addJunction(pos)
     if oneIn(4) then
-        setTile(pos, openDoorTile)
+        if oneIn(3) then
+            setTile(pos, openDoorTile)
+        else
+            setTile(pos, floorTile)
+        end
     else
         setTile(pos, closedDoorTile)
     end
@@ -242,7 +246,7 @@ function connectRegions()
         local pos = toVec(connector)
         addJunction(pos)
 
-        drawDungeon()
+        if drawStep then drawDungeon() end
 
         -- Merge the connected regions. We'll pick one region (arbitrarily) and
         -- map all of the other regions to its index.
@@ -264,10 +268,11 @@ function connectRegions()
         end
 
         -- The sources are no longer in use.
-        all(sources, function(source)
+        for source in all(sources) do
             del(openRegions, source)
-        end)
+        end
 
+        -- Remove any connectors that aren't needed anymore.
         removeWhere(
             connectors, function(pos)
                 -- Don't allow connectors right next to each other.
@@ -280,6 +285,7 @@ function connectRegions()
                         return merged[region]
                     end
                 )
+                pqf('regions:', regions)
                 if #regions > 1 then
                     return false
                 end
@@ -344,10 +350,12 @@ end
 function drawConnections()
     forEachArr2D(dungeon, function(x, y)
         local regions = connectorRegions[x .. '_' .. y]
-
         if regions then
-            pset(x, y, 8)
-            -- pqf("x=%, y=%, color=%", x, y, regions)
+            if #regions == 2 then
+                pset(x, y, 3)
+            else
+                pset(x, y, 11)
+            end
         end
     end)
 end
@@ -359,4 +367,4 @@ _init = function()
     removeDeadEnds()
 end
 
--- _draw = drawDungeon
+_draw = drawDungeon

@@ -239,14 +239,17 @@ function toSet(table)
 	return set
 end
 
-function toVec(str)
-	local x = split(str, "_")[1]
-	local y = split(str, "_")[2]
-	return { x = x, y = y }
-end
+function removeDup(table)
+	local set = {}
+	local newTable = {}
+	for _, v in pairs(table) do
+			if not set[v] then
+					add(newTable, v)
+					set[v] = true
+			end
+	end
+	return newTable
 
-function toStr(x, y)
-	return x .. "_" .. y
 end
 
 function slice(table, start, finish)

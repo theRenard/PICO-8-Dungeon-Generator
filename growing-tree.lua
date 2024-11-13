@@ -44,14 +44,14 @@ local maxRemovableDeadEnds = 2000
 local numRoomTries = 1000
 local roomExtraSize = 8
 local bouldersRatio = 0
-local extraConnectorChance = 0
+local extraConnectorChance = 40
 
 -- Tiles
-local wallTile = 0
+local wallTile = 2
 local floorTile = 7
 local boulderTile = 4
-local openDoorTile = 12
-local closedDoorTile = 8
+local openDoorTile = 7 --12
+local closedDoorTile = 7 --13
 
 -- 2D array of tiles: { x: { y: t } }
 local dungeon = create2dArray(dungeonWidth, dungeonHeight, wallTile)
@@ -105,6 +105,7 @@ end
 
 function addRegion()
     currentRegion += 1
+    pq('addRegion', currentRegion)
 end
 
 function addJunction(pos)
@@ -120,6 +121,7 @@ function addJunction(pos)
 end
 
 function growMaze(startPos)
+    pq('growMaze', startPos)
     addRegion()
     local positions = {}
     carve(startPos)
@@ -236,66 +238,72 @@ function connectRegions()
 
     -- Keep track of which regions have been merged. This maps an original
     -- region index to the one it has been merged to.
-    local merged = {}
-    local openRegions = {}
+    local mergedRegions = {}
+    local unMergedRegions = {}
     for i = 1, currentRegion do
-        merged[i] = i
-        add(openRegions, i)
+        mergedRegions[i] = i
+        unMergedRegions[i] = i
     end
 
-    while #openRegions > 1 do
+    while #unMergedRegions > 1 do
+        pq('---------------------------------')
+        pq('mergedRegions', #mergedRegions)
+        pq('unMergedRegions', #unMergedRegions)
+
         local connector = getRandomItem(connectors)
 
-        if connector then
-            addJunction(connector)
-        end
+        addJunction(connector)
 
         -- Merge the connected regions. We'll pick one region (arbitrarily) and
         -- map all of the other regions to its index.
         local regions = map(connectorRegions[connector.x][connector.y], function(region)
-            return merged[region]
+            return mergedRegions[region]
         end)
 
-        local dest = regions[1]
+        local dest = regions[1] -- the first region: number
 
-        local sources = slice(regions, 2)
+        local sources = slice(regions, 2) -- the rest of the regions: { number }
 
         -- Merge all of the affected regions. We have to look at *all* of the
         -- regions because other regions may have previously been merged with
         -- some of the ones we're merging now.
         for i = 1, currentRegion do
-            if contains(sources, merged[i]) then
-                merged[i] = dest
+            if contains(sources, mergedRegions[i]) then
+                mergedRegions[i] = dest
             end
         end
 
         -- The sources are no longer in use.
         for source in all(sources) do
-            del(openRegions, source)
+            del(unMergedRegions, source)
         end
 
         -- Remove any connectors that aren't needed anymore.
-        for pos in all(connectors) do
+        removeWhere(connectors, function(pos)
+            pq(#connectors)
             -- Don't allow connectors right next to each other.
             if distanceBetween(connector, pos) < 2 then
-                del(connectors, pos)
+                return true
             end
 
             -- If the connector no long spans different regions, we don't need it.
-            local regions = removeDup(map(
+            local regions = map(
                 connectorRegions[pos.x][pos.y], function(region)
-                    return merged[region]
+                    return mergedRegions[region]
                 end
-            ))
+            )
+            regions = removeDup(regions)
 
             if #regions > 1 then
-                del(connectors, pos)
+                return false
             end
 
-            -- if oneIn(extraConnectorChance) then
-            --     addJunction(pos)
-            -- end
-        end
+            if oneIn(extraConnectorChance) then
+                addJunction(pos)
+            end
+
+            return true
+        end)
 
         if drawStep then drawDungeon() end
     end
@@ -345,7 +353,11 @@ end
 function drawRegions()
     forEachArr2D(dungeon, function(x, y)
         local region = regions[x][y]
-        local color = region and region * 2 or 0
+        -- color between 0 and 15
+        local color = region and (region % 15) + 1 or 0
+        if color == 9 or color == 10 then
+            color = 11
+        end
         pset(x, y, color)
     end)
 end
@@ -356,9 +368,9 @@ function drawConnections()
 
         if regions then
             if #regions == 2 then
-                pset(x, y, 3)
+                pset(x, y, 9)
             else
-                pset(x, y, 11)
+                pset(x, y, 10)
             end
         end
     end)

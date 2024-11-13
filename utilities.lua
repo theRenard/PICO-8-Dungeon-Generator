@@ -226,7 +226,7 @@ end
 function removeWhere(table, func)
 	for i = #table, 1, -1 do
 			if func(table[i]) then
-					del(table, i)
+					deli(table, i)
 			end
 	end
 end

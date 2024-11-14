@@ -1,5 +1,4 @@
 cls(0)
-pq('---------------------------------')
 
 --[[
 from https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
@@ -40,7 +39,7 @@ local drawStep = true
 local method = 3 -- chose_random, chose_oldest, chose_newest
 local dungeonWidth = 128
 local dungeonHeight = 128
-local maxRemovableDeadEnds = 2000
+local maxRemovableDeadEnds = 4000
 local numRoomTries = 1000
 local roomExtraSize = 8
 local bouldersRatio = 0
@@ -105,7 +104,6 @@ end
 
 function addRegion()
     currentRegion += 1
-    pq('addRegion', currentRegion)
 end
 
 function addJunction(pos)
@@ -121,7 +119,6 @@ function addJunction(pos)
 end
 
 function growMaze(startPos)
-    pq('growMaze', startPos)
     addRegion()
     local positions = {}
     carve(startPos)
@@ -246,10 +243,6 @@ function connectRegions()
     end
 
     while #unMergedRegions > 1 do
-        pq('---------------------------------')
-        pq('mergedRegions', #mergedRegions)
-        pq('unMergedRegions', #unMergedRegions)
-
         local connector = getRandomItem(connectors)
 
         addJunction(connector)
@@ -280,7 +273,6 @@ function connectRegions()
 
         -- Remove any connectors that aren't needed anymore.
         removeWhere(connectors, function(pos)
-            pq(#connectors)
             -- Don't allow connectors right next to each other.
             if distanceBetween(connector, pos) < 2 then
                 return true
@@ -383,4 +375,4 @@ _init = function()
     removeDeadEnds()
 end
 
--- _draw = drawDungeon
+_draw = drawDungeon

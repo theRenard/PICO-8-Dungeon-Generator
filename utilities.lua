@@ -1,4 +1,3 @@
-
 Direction = {
 	CARDINAL = {
 		{ x = 0, y = -1 },
@@ -83,13 +82,12 @@ function intRnd(n)
 	return flr(rnd(n))
 end
 
-
 function shuffle(tbl)
-  for i = #tbl, 2, -1 do
-    local j = intRnd(i)
-    tbl[i], tbl[j] = tbl[j], tbl[i]
-  end
-  return tbl
+	for i = #tbl, 2, -1 do
+		local j = intRnd(i)
+		tbl[i], tbl[j] = tbl[j], tbl[i]
+	end
+	return tbl
 end
 
 --- Creates a 2D array with specified dimensions and initializes it with a given value.
@@ -100,19 +98,19 @@ end
 function create2DArr(len1, len2, val)
 	local arr = {}
 	for i = 0, len1 do
-			arr[i] = {}
-			for j = 0, len2 do
-					arr[i][j] = val or nil
-			end
+		arr[i] = {}
+		for j = 0, len2 do
+			arr[i][j] = val or nil
+		end
 	end
 	return arr
 end
 
 function forEachArr2D(arr, callback)
 	for x = 0, #arr do
-			for y = 0, #arr[x] do
-					callback(x, y)
-			end
+		for y = 0, #arr[x] do
+			callback(x, y)
+		end
 	end
 end
 
@@ -122,9 +120,9 @@ end
 
 function contains(table, value)
 	for _, v in pairs(table) do
-			if v == value then
-					return true
-			end
+		if v == value then
+			return true
+		end
 	end
 	return false
 end
@@ -132,7 +130,7 @@ end
 function keys(table)
 	local keys = {}
 	for k, _ in pairs(table) do
-			add(keys, k)
+		add(keys, k)
 	end
 	return keys
 end
@@ -140,16 +138,16 @@ end
 function map(table, func)
 	local newTable = {}
 	for k, v in pairs(table) do
-			newTable[k] = func(v)
+		newTable[k] = func(v)
 	end
 	return newTable
 end
 
 function removeWhere(table, func)
 	for i = #table, 1, -1 do
-			if func(table[i]) then
-					deli(table, i)
-			end
+		if func(table[i]) then
+			deli(table, i)
+		end
 	end
 end
 
@@ -157,21 +155,18 @@ function removeDup(table)
 	local set = {}
 	local newTable = {}
 	for _, v in pairs(table) do
-			if not set[v] then
-					add(newTable, v)
-					set[v] = true
-			end
+		if not set[v] then
+			add(newTable, v)
+			set[v] = true
+		end
 	end
 	return newTable
-
 end
 
 function slice(table, start, finish)
 	local newTable = {}
 	for i = start, finish or #table do
-			add(newTable, table[i])
+		add(newTable, table[i])
 	end
 	return newTable
 end
-
-

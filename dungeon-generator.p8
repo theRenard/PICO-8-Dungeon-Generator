@@ -4,9 +4,9 @@ __lua__
 -- dungeon generator
 -- by @monsieurLeRenard
 
-#include debug.lua
-#include utilities.lua
-#include generator.lua
+#include lua/debug.lua
+#include lua/utilities.lua
+#include lua/generator.lua
 
 __gfx__
 00000000000000006660666608888880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

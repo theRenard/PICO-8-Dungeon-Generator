@@ -51,22 +51,3 @@ function qf(fmt, ...)
   return str
 end
 function pqf(...) printh(qf(...)) end
-
---- converts anything to string
-function tostring(any)
-  if type(any) == "function" then return "function" end
-  if any == nil then return "nil" end
-  if type(any) == "string" then return any end
-  if type(any) == "boolean" then return any and "true" or "false" end
-  if type(any) == "number" then return "" .. any end
-  if type(any) == "table" then
-    -- recursion
-    local str = "{ "
-    for k, v in pairs(any) do
-      str = str .. tostring(v) .. " "
-    end
-    return str .. "}"
-  end
-  return "unkown"
-  -- should never show
-end

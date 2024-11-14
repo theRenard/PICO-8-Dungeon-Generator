@@ -3,63 +3,39 @@ cls(0)
 --[[
 from https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 
-The random dungeon generator.
-Starting with a stage of solid walls, it works like so:
-
-1. Place a number of randomly sized and positioned rooms. If a room
-    overlaps an existing room, it is discarded. Any remaining rooms are
-    carved out.
- 2. Any remaining solid areas are filled in with mazes. The maze generator
-    will grow and fill in even odd-shaped areas, but will not touch any
-    rooms.
- 3. The result of the previous two steps is a series of unconnected rooms
-    and mazes. We walk the stage and find every tile that can be a
-    "connector". This is a solid tile that is adjacent to two unconnected
-    regions.
- 4. We randomly choose connectors and open them or place a door there until
-    all of the unconnected regions have been joined. There is also a slight
-    chance to carve a connector between two already-joined regions, so that
-    the dungeon isn't single connected.
- 5. The mazes will have a lot of dead ends. Finally, we remove those by
-    repeatedly filling in any open tile that's closed on three sides. When
-    this is done, every corridor in a maze actually leads somewhere.
+Types
+- tile = number
+- pos/vec = { x: number, y: number }
+- room = { x: number, y: number, w: number, h: number }
+- direction = { x: number, y: number }
+- region = number
+- connector = { x: number, y: number }
 --]]
 
 -- Constants
-
--- Types
---- tile = number
---- pos/vec = { x: number, y: number }
---- room = { x: number, y: number, w: number, h: number }
---- direction = { x: number, y: number }
---- region = number
---- connector = { x: number, y: number }
-
 local drawStep = true
-local method = 3 -- chose_random, chose_oldest, chose_newest
+local drawInterval = 0.9
+local method = 2 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
 local dungeonWidth = 128
 local dungeonHeight = 128
-local maxRemovableDeadEnds = 4000
-local numRoomTries = 1000
-local roomExtraSize = 8
-local bouldersRatio = 0
+local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
+local roomExtraSize = 20
 local extraConnectorChance = 40
 
 -- Tiles
-local wallTile = 2
+local wallTile = 1
 local floorTile = 7
-local boulderTile = 4
-local openDoorTile = 7 --12
-local closedDoorTile = 7 --13
+local openDoorTile = 12
+local closedDoorTile = 8
 
 -- 2D array of tiles: { x: { y: t } }
-local dungeon = create2dArray(dungeonWidth, dungeonHeight, wallTile)
+local dungeon = create2DArr(dungeonWidth, dungeonHeight, wallTile)
 
 -- regions: 2D array of regions { x: { y: r } }
-local regions = create2dArray(dungeonWidth, dungeonHeight, nil)
+local regions = create2DArr(dungeonWidth, dungeonHeight, nil)
 
 -- connectorRegions: 2D array of regions { x: { y: { r1, r2 }}}
-local connectorRegions = create2dArray(dungeonWidth, dungeonHeight, nil)
+local connectorRegions = create2DArr(dungeonWidth, dungeonHeight, nil)
 local currentRegion = 0
 
 function choseIndex(ceil)
@@ -78,7 +54,7 @@ function isInBounds(pos, padding)
 end
 
 function isWall(pos)
-    return dungeon[pos.x][pos.y] == wallTile or dungeon[pos.x][pos.y] == boulderTile
+    return dungeon[pos.x][pos.y] == wallTile
 end
 
 function isPath(pos)
@@ -303,39 +279,33 @@ end
 
 function removeDeadEnds()
     local done = false
-    local removedTiles = 0
+
     while not done do
         done = true
         forEachArr2D(dungeon, function(x, y)
-            if isPath({ x = x, y = y }) then
-                local wall = 0
+            if not isWall({ x = x, y = y }) then
+                local exits = 0
                 for _, direction in pairs(Direction.CARDINAL) do
                     local neighborPos = {
                         x = x + direction.x,
                         y = y + direction.y
                     }
-                    if isWall(neighborPos) then
-                        wall = wall + 1
+                    if not isWall(neighborPos) then
+                        exits = exits + 1
                     end
                 end
-                if wall == 3 then
+                if exits == 1 then
                     fill({ x = x, y = y })
-                    removedTiles = removedTiles + 1
-                    if removedTiles > maxRemovableDeadEnds then
-                        done = true
-                    else
-                        done = false
-                    end
+                    if drawStep then drawDungeon() end
+                    done = false
                 end
             end
         end)
-        if drawStep then drawDungeon() end
     end
 end
 
--- Draw the dungeon
 function drawDungeon()
-    if rnd() > 0.9 then
+    if rnd() > drawInterval then
         forEachArr2D(dungeon, function(x, y)
             pset(x, y, dungeon[x][y])
         end)
@@ -355,17 +325,19 @@ function drawRegions()
 end
 
 function drawConnections()
-    forEachArr2D(dungeon, function(x, y)
-        local regions = connectorRegions[x][y]
+    if rnd() > drawInterval then
+        forEachArr2D(dungeon, function(x, y)
+            local regions = connectorRegions[x][y]
 
-        if regions then
-            if #regions == 2 then
-                pset(x, y, 9)
-            else
-                pset(x, y, 10)
+            if regions then
+                if #regions == 2 then
+                    pset(x, y, 9)
+                else
+                    pset(x, y, 10)
+                end
             end
-        end
-    end)
+        end)
+    end
 end
 
 _init = function()

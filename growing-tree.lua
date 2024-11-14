@@ -2,6 +2,7 @@ cls(0)
 
 --[[
 from https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
+and https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 
 Types
 - tile = number

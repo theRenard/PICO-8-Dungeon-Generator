@@ -7,7 +7,7 @@ https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 --]]
 
 -- Constants
-local drawStep = true
+local drawStep = false
 local method = 3 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
 local dungeonWidth = 128
 local dungeonHeight = 128
@@ -24,6 +24,7 @@ local closedDoorTile = 8
 local dungeon = create2DArr(dungeonWidth, dungeonHeight, wallTile)
 local regions = create2DArr(dungeonWidth, dungeonHeight, nil)
 local connectorRegions = create2DArr(dungeonWidth, dungeonHeight, nil)
+local maze = {}
 local currentRegion = 0
 
 function choseIndex(ceil)
@@ -70,6 +71,10 @@ function addRegion()
     currentRegion += 1
 end
 
+function addMaze(pos)
+    add(maze, pos)
+end
+
 function addJunction(pos)
     if oneIn(4) then
         if oneIn(3) then
@@ -80,12 +85,14 @@ function addJunction(pos)
     else
         setTile(pos, closedDoorTile)
     end
+    addMaze(pos)
 end
 
 function growMaze(startPos)
     addRegion()
     local positions = {}
     carve(startPos)
+    addMaze(startPos)
     add(positions, startPos)
 
     while #positions > 0 do
@@ -103,6 +110,8 @@ function growMaze(startPos)
             if canCarve(neighborPos) and canCarve(nextNeighborTile) then
                 carve(neighborPos)
                 carve(nextNeighborTile)
+                addMaze(neighborPos)
+                addMaze(nextNeighborTile)
                 add(positions, nextNeighborTile)
                 if drawStep then drawDungeon() end
                 index = nil
@@ -262,27 +271,28 @@ function removeDeadEnds()
 
     while not done do
         done = true
-        forEachArr2D(
-            dungeon, function(x, y)
-                if not isWall({ x = x, y = y }) then
-                    local exits = 0
-                    for _, direction in pairs(Direction.CARDINAL) do
-                        local neighborPos = {
-                            x = x + direction.x,
-                            y = y + direction.y
-                        }
-                        if not isWall(neighborPos) then
-                            exits = exits + 1
-                        end
-                    end
-                    if exits == 1 then
-                        fill({ x = x, y = y })
-                        if drawStep then drawDungeon() end
-                        done = false
+
+        for _, pos in pairs(maze) do
+            local x, y = pos.x, pos.y
+            if not isWall({ x = x, y = y }) then
+                local exits = 0
+                for _, direction in pairs(Direction.CARDINAL) do
+                    local neighborPos = {
+                        x = x + direction.x,
+                        y = y + direction.y
+                    }
+                    if not isWall(neighborPos) then
+                        exits = exits + 1
                     end
                 end
+                if exits == 1 then
+                    fill({ x = x, y = y })
+                    del(maze, pos)
+                    if drawStep then drawDungeon() end
+                    done = false
+                end
             end
-        )
+        end
     end
 end
 

@@ -7,7 +7,7 @@ https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 --]]
 
 -- Constants
-local drawStep = false
+local drawStep = true
 local method = 3 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
 local dungeonWidth = 128
 local dungeonHeight = 128
@@ -271,26 +271,23 @@ function removeDeadEnds()
 
     while not done do
         done = true
-
         for _, pos in pairs(maze) do
             local x, y = pos.x, pos.y
-            if not isWall({ x = x, y = y }) then
-                local exits = 0
-                for _, direction in pairs(Direction.CARDINAL) do
-                    local neighborPos = {
-                        x = x + direction.x,
-                        y = y + direction.y
-                    }
-                    if not isWall(neighborPos) then
-                        exits = exits + 1
-                    end
+            local exits = 0
+            for _, direction in pairs(Direction.CARDINAL) do
+                local neighborPos = {
+                    x = x + direction.x,
+                    y = y + direction.y
+                }
+                if not isWall(neighborPos) then
+                    exits = exits + 1
                 end
-                if exits == 1 then
-                    fill({ x = x, y = y })
-                    del(maze, pos)
-                    if drawStep then drawDungeon() end
-                    done = false
-                end
+            end
+            if exits == 1 then
+                fill({ x = x, y = y })
+                del(maze, pos)
+                done = false
+                if drawStep then drawDungeon() end
             end
         end
     end

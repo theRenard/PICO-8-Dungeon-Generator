@@ -39,7 +39,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Acknowledgements
 
-Additionally, the code can be optimized by removing the drawing part, the debug part, and some utilities that are not essential for the core functionality of the dungeon generator.
+Additionally, the code can be optimized by removing the drawing part, the debug part, and some utilities that are not essential for the core functionality of the dungeon generator. **Tables are 1-based.**
 
 Special thanks to the Pico-8 community for their support and inspiration. 
 

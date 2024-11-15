@@ -11,7 +11,7 @@ local drawStep = true
 local method = 2 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
 local dungeonWidth = 128
 local dungeonHeight = 128
-local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
+local numRoomTries = 100 -- number of rooms to try, the greater the number, the more rooms
 local roomExtraSize = 20
 local extraConnectorChance = 40
 

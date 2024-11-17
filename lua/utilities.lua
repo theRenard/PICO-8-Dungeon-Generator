@@ -135,7 +135,7 @@ function keys(table)
 	return keys
 end
 
-function map(table, func)
+function domap(table, func)
 	local newTable = {}
 	for k, v in pairs(table) do
 		newTable[k] = func(v)

@@ -17,13 +17,14 @@ local extraConnectorChance = 40
 local exits = 2
 
 -- Tiles
-local wallTile = 1
+local rockTile = 4
+local wallTile = 5
 local floorTile = 7
 local openDoorTile = 12
 local closedDoorTile = 8
 local exitTile = 9
 
-local dungeon = create2DArr(dungeonWidth, dungeonHeight, wallTile)
+local dungeon = create2DArr(dungeonWidth, dungeonHeight, rockTile)
 local regions = create2DArr(dungeonWidth, dungeonHeight, nil)
 local connectorRegions = create2DArr(dungeonWidth, dungeonHeight, nil)
 local deadEnds = {}
@@ -45,12 +46,16 @@ function isInBounds(pos, padding)
     return pos.x <= dungeonWidth - padding and pos.y <= dungeonHeight - padding and pos.x > 0 and pos.y > 0
 end
 
+function isRock(pos)
+    return dungeon[pos.x][pos.y] == rockTile
+end
+
 function isWall(pos)
     return dungeon[pos.x][pos.y] == wallTile
 end
 
-function isPath(pos)
-    return dungeon[pos.x][pos.y] == floorTile
+function isWalkable(pos)
+    return dungeon[pos.x][pos.y] == floorTile or dungeon[pos.x][pos.y] == openDoorTile or dungeon[pos.x][pos.y] == closedDoorTile or dungeon[pos.x][pos.y] == exitTile
 end
 
 function setTile(pos, tileType)
@@ -63,11 +68,11 @@ function carve(pos)
 end
 
 function fill(pos)
-    dungeon[pos.x][pos.y] = wallTile
+    dungeon[pos.x][pos.y] = rockTile
 end
 
 function canCarve(pos)
-    return isInBounds(pos) and isWall(pos)
+    return isInBounds(pos) and isRock(pos)
 end
 
 function addRegion()
@@ -127,7 +132,7 @@ function growMazes()
     for x = 1, dungeonWidth, 2 do
         for y = 1, dungeonHeight, 2 do
             local pos = { x = x, y = y }
-            if isWall(pos) then
+            if isRock(pos) then
                 growMaze(pos)
             end
         end
@@ -172,7 +177,7 @@ function connectRegions()
 
     forEachArr2D(
         dungeon, function(x, y)
-            if isWall({ x = x, y = y }) then
+            if isRock({ x = x, y = y }) then
                 local _regions = {}
                 for _, direction in pairs(Direction.CARDINAL) do
                     local neighborPos = {
@@ -220,7 +225,7 @@ function connectRegions()
 
         addJunction(connector)
 
-        local regions = map(
+        local regions = domap(
             connectorRegions[connector.x][connector.y], function(region)
                 return mergedRegions[region]
             end
@@ -245,7 +250,7 @@ function connectRegions()
                 if distanceBetween(connector, pos) < 2 then
                     return true
                 end
-                local regions = map(
+                local regions = domap(
                     connectorRegions[pos.x][pos.y], function(region)
                         return mergedRegions[region]
                     end
@@ -271,14 +276,14 @@ function removeDeadEnds()
     -- add dead ends
     forEachArr2D(
         dungeon, function(x, y)
-            if not isWall({ x = x, y = y }) then
+            if not isRock({ x = x, y = y }) then
                 local exits = 0
                 for _, direction in pairs(Direction.CARDINAL) do
                     local neighborPos = {
                         x = x + direction.x,
                         y = y + direction.y
                     }
-                    if not isWall(neighborPos) then
+                    if not isRock(neighborPos) then
                         exits += 1
                     end
                 end
@@ -298,7 +303,7 @@ function removeDeadEnds()
                     x = x + direction.x,
                     y = y + direction.y
                 }
-                if not isWall(neighborPos) then
+                if not isRock(neighborPos) then
                     add(paths, neighborPos)
                 end
             end
@@ -314,6 +319,64 @@ function removeDeadEnds()
     for _, pos in pairs(deadEnds) do
         setTile(pos, exitTile)
     end
+end
+
+function createWalls()
+    forEachArr2D(
+        dungeon, function(x, y)
+            if isRock({ x = x, y = y }) then
+                local paths = {}
+                for _, direction in pairs(Direction.ALL) do
+                    local neighborPos = {
+                        x = x + direction.x,
+                        y = y + direction.y
+                    }
+                    if isInBounds(neighborPos) and isWalkable(neighborPos) then
+                        add(paths, neighborPos)
+                    end
+                end
+                if #paths > 0 then
+                    setTile({ x = x, y = y }, wallTile)
+                end
+                if drawStep then drawDungeon() end
+            end
+        end
+    )
+end
+
+function autoTile()
+    forEachArr2D(
+        dungeon, function(x, y)
+            if isWall({ x = x, y = y }) then
+                local bitmask = 0
+                local bitMapping = {
+                    { x - 1, y - 1, 0b10000000 },
+                    { x, y - 1, 0b01000000 },
+                    { x + 1, y - 1, 0b00100000 },
+                    { x - 1, y, 0b00010000 },
+                    { x + 1, y, 0b00001000 },
+                    { x - 1, y + 1, 0b00000100 },
+                    { x, y + 1, 0b00000010 },
+                    { x + 1, y + 1, 0b00000001 }
+                }
+                for _, pos in pairs(bitMapping) do
+                    local x, y, bit = pos[1], pos[2], pos[3]
+                    if isInBounds({ x = x, y = y }) and isWall({ x = x, y = y }) then
+                        bitmask = bor(bitmask, bit)
+                    end
+                end
+                for _, rule in pairs(rules) do
+                    local rulemask, sprite = rule[1], rule[2]
+                    if type(sprite) == "table" then
+                        sprite = sprite[flr(rnd(#sprite)) + 1]
+                    end
+                    if band(bitmask, rulemask) == rulemask then
+                        mset(x, y, sprite)
+                    end
+                end
+            end
+        end
+    )
 end
 
 function drawDungeon()
@@ -362,6 +425,35 @@ _init = function()
     growMazes()
     connectRegions()
     removeDeadEnds()
+    createWalls()
+    autoTile()
 end
 
-_draw = drawDungeon
+-- the coordinates of the upper left corner of the camera
+cam_x = 0
+cam_y = 0
+
+function _update()
+  if (btn(0) and cam_x > 0) cam_x -= 10
+  if (btn(1) and cam_x < 895) cam_x += 10
+  if (btn(2) and cam_y > 0) cam_y -= 10
+  if (btn(3) and cam_y < 127) cam_y += 10
+  -- (the camera stops with the bottom of
+  -- the screen at row 32.)
+end
+
+function _draw()
+  cls()
+  -- set the camera to the current location
+  camera(cam_x, cam_y)
+
+  -- draw the entire map at (0, 0), allowing
+  -- the camera and clipping region to decide
+  -- what is shown
+  map(0, 0, 0, 0, 128, 32)
+
+  -- reset the camera then print the camera
+  -- coordinates on screen
+  camera()
+  print('('..cam_x..', '..cam_y..')', 0, 0, 7)
+end

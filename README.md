@@ -22,6 +22,7 @@ You can configure the dungeon generator by modifying the parameters in the code.
 - `numRoomTries`: The number of rooms to try. The greater the number, the more rooms.
 - `roomExtraSize`: Additional size for rooms.
 - `extraConnectorChance`: The chance of adding extra connectors between rooms.
+- `exits`: The number of exits to create.
 
 Please note that tables are zero based
 

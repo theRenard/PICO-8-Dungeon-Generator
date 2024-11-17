@@ -14,12 +14,14 @@ local dungeonHeight = 128
 local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
 local roomExtraSize = 20
 local extraConnectorChance = 40
+local exits = 2
 
 -- Tiles
 local wallTile = 1
 local floorTile = 7
 local openDoorTile = 12
 local closedDoorTile = 8
+local exitTile = 9
 
 local dungeon = create2DArr(dungeonWidth, dungeonHeight, wallTile)
 local regions = create2DArr(dungeonWidth, dungeonHeight, nil)
@@ -287,7 +289,7 @@ function removeDeadEnds()
         end
     )
 
-    while #deadEnds > 0 do
+    while #deadEnds > exits do
         for _, pos in pairs(deadEnds) do
             local x, y = pos.x, pos.y
             local paths = {}
@@ -308,47 +310,51 @@ function removeDeadEnds()
             del(deadEnds, pos)
         end
     end
+
+    for _, pos in pairs(deadEnds) do
+        setTile(pos, exitTile)
+    end
 end
 
 function drawDungeon()
-	if rnd() > 0.9 then
-			forEachArr2D(
-					dungeon, function(x, y)
-							pset(x, y, dungeon[x][y])
-					end
-			)
-	end
+    if rnd() > 0.9 then
+        forEachArr2D(
+            dungeon, function(x, y)
+                pset(x, y, dungeon[x][y])
+            end
+        )
+    end
 end
 
 function drawRegions()
-	forEachArr2D(
-			dungeon, function(x, y)
-					local region = regions[x][y]
-					-- color between 0 and 15
-					local color = region and (region % 15) + 1 or 0
-					if color == 9 or color == 10 then
-							color = 11
-					end
-					pset(x, y, color)
-			end
-	)
+    forEachArr2D(
+        dungeon, function(x, y)
+            local region = regions[x][y]
+            -- color between 0 and 15
+            local color = region and (region % 15) + 1 or 0
+            if color == 9 or color == 10 then
+                color = 11
+            end
+            pset(x, y, color)
+        end
+    )
 end
 
 function drawConnections()
-	if rnd() > 0.9 then
-			forEachArr2D(
-					dungeon, function(x, y)
-							local regions = connectorRegions[x][y]
-							if regions then
-									if #regions == 2 then
-											pset(x, y, 9)
-									else
-											pset(x, y, 10)
-									end
-							end
-					end
-			)
-	end
+    if rnd() > 0.9 then
+        forEachArr2D(
+            dungeon, function(x, y)
+                local regions = connectorRegions[x][y]
+                if regions then
+                    if #regions == 2 then
+                        pset(x, y, 9)
+                    else
+                        pset(x, y, 10)
+                    end
+                end
+            end
+        )
+    end
 end
 
 _init = function()

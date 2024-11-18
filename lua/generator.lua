@@ -9,10 +9,10 @@ https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 -- Constants
 local drawStep = false
 local method = 3 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
-local dungeonWidth = 126
-local dungeonHeight = 126
+local dungeonWidth = 126  -- consider extra space for external walls
+local dungeonHeight = 126 -- consider extra space for external walls
 local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
-local roomExtraSize = 20
+local roomExtraSize = 8
 local extraConnectorChance = 40
 local exits = 2
 
@@ -375,7 +375,7 @@ function autoTile()
                         sprite = sprite[flr(rnd(#sprite)) + 1]
                     end
                     if band(bitmask, rulemask) == rulemask then
-                        pq(sprite)
+                        sprite = sprite + 5
                         mset(x, y, sprite)
                     end
                 end
@@ -427,7 +427,7 @@ _init = function()
     addRooms()
     growMazes()
     connectRegions()
-    -- removeDeadEnds()
+    removeDeadEnds()
     createWalls()
     autoTile()
 end

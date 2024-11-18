@@ -1,4 +1,4 @@
-cls(0)
+cls()
 
 --[[
 based on the articles:
@@ -9,8 +9,8 @@ https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 -- Constants
 local drawStep = false
 local method = 3 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
-local dungeonWidth = 128
-local dungeonHeight = 128
+local dungeonWidth = 126
+local dungeonHeight = 126
 local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
 local roomExtraSize = 20
 local extraConnectorChance = 40
@@ -51,6 +51,10 @@ function isRock(pos)
 end
 
 function isWall(pos)
+    local x, y = pos.x, pos.y
+    if x < 0 or x > dungeonWidth or y < 0 or y > dungeonHeight then
+        return false
+    end
     return dungeon[pos.x][pos.y] == wallTile
 end
 
@@ -361,7 +365,7 @@ function autoTile()
                 }
                 for _, pos in pairs(bitMapping) do
                     local x, y, bit = pos[1], pos[2], pos[3]
-                    if isInBounds({ x = x, y = y }) and isWall({ x = x, y = y }) then
+                    if isWall({ x = x, y = y }) then
                         bitmask = bor(bitmask, bit)
                     end
                 end
@@ -371,6 +375,7 @@ function autoTile()
                         sprite = sprite[flr(rnd(#sprite)) + 1]
                     end
                     if band(bitmask, rulemask) == rulemask then
+                        pq(sprite)
                         mset(x, y, sprite)
                     end
                 end
@@ -380,13 +385,11 @@ function autoTile()
 end
 
 function drawDungeon()
-    if rnd() > 0.9 then
-        forEachArr2D(
-            dungeon, function(x, y)
-                pset(x, y, dungeon[x][y])
-            end
-        )
-    end
+    forEachArr2D(
+        dungeon, function(x, y)
+            pset(x, y, dungeon[x][y])
+        end
+    )
 end
 
 function drawRegions()
@@ -424,7 +427,7 @@ _init = function()
     addRooms()
     growMazes()
     connectRegions()
-    removeDeadEnds()
+    -- removeDeadEnds()
     createWalls()
     autoTile()
 end
@@ -450,10 +453,11 @@ function _draw()
   -- draw the entire map at (0, 0), allowing
   -- the camera and clipping region to decide
   -- what is shown
+    -- drawDungeon()
   map(0, 0, 0, 0, 128, 32)
 
   -- reset the camera then print the camera
   -- coordinates on screen
   camera()
-  print('('..cam_x..', '..cam_y..')', 0, 0, 7)
+--   print('('..cam_x..', '..cam_y..')', 0, 0, 7)
 end

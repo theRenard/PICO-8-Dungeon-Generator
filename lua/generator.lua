@@ -12,7 +12,7 @@ local method = 3 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
 local dungeonWidth = 126  -- consider extra space for external walls
 local dungeonHeight = 126 -- consider extra space for external walls
 local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
-local roomExtraSize = 8
+local roomExtraSize = 2
 local extraConnectorChance = 40
 local exits = 2
 

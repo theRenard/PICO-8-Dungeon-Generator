@@ -6,8 +6,8 @@ https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 --]]
 
-local widht = 128
-local height = 128
+local widht = 40
+local height = 40
 
 -- Constants
 local drawStep = true
@@ -17,7 +17,7 @@ local border = 1 + base
 local mazeWidth = widht - base - border
 local mazeHeight = height - base - border
 local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
-local roomExtraSize = 20
+local roomExtraSize = 1
 local extraConnectorChance = 40
 local exits = 2
 

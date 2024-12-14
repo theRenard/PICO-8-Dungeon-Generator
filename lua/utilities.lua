@@ -97,9 +97,9 @@ end
 -- @return A 2D array with dimensions len1 x len2, initialized with the specified value.
 function create2DArr(len1, len2, val)
 	local arr = {}
-	for i = 0, len1 do
+	for i = 1, len1 do
 		arr[i] = {}
-		for j = 0, len2 do
+		for j = 1, len2 do
 			arr[i][j] = val or nil
 		end
 	end
@@ -107,8 +107,8 @@ function create2DArr(len1, len2, val)
 end
 
 function forEachArr2D(arr, callback)
-	for x = 0, #arr do
-		for y = 0, #arr[x] do
+	for x = 1, #arr do
+		for y = 1, #arr[x] do
 			callback(x, y)
 		end
 	end
@@ -135,7 +135,7 @@ function keys(table)
 	return keys
 end
 
-function map(table, func)
+function domap(table, func)
 	local newTable = {}
 	for k, v in pairs(table) do
 		newTable[k] = func(v)
@@ -170,3 +170,5 @@ function slice(table, start, finish)
 	end
 	return newTable
 end
+
+

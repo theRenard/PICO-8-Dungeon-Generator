@@ -6,11 +6,16 @@ https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 --]]
 
+local widht = 128
+local height = 128
+
 -- Constants
-local drawStep = false
+local drawStep = true
 local method = 3 -- chose_random = 1, chose_oldest = 2, chose_newest = 3
-local dungeonWidth = 128
-local dungeonHeight = 128
+local base = 1
+local border = 1 + base
+local mazeWidth = widht - base - border
+local mazeHeight = height - base - border
 local numRoomTries = 1000 -- number of rooms to try, the greater the number, the more rooms
 local roomExtraSize = 20
 local extraConnectorChance = 40
@@ -23,9 +28,9 @@ local openDoorTile = 12
 local closedDoorTile = 8
 local exitTile = 9
 
-local dungeon = create2DArr(dungeonWidth, dungeonHeight, wallTile)
-local regions = create2DArr(dungeonWidth, dungeonHeight, nil)
-local connectorRegions = create2DArr(dungeonWidth, dungeonHeight, nil)
+local maze = create2DArr(mazeWidth, mazeHeight, wallTile)
+local regions = create2DArr(mazeWidth, mazeHeight, nil)
+local connectorRegions = create2DArr(mazeWidth, mazeHeight, nil)
 local deadEnds = {}
 
 local currentRegion = 0
@@ -40,21 +45,20 @@ function choseIndex(ceil)
     end
 end
 
-function isInBounds(pos, padding)
-    local padding = padding or 1
-    return pos.x <= dungeonWidth - padding and pos.y <= dungeonHeight - padding and pos.x > 0 and pos.y > 0
+function isInBounds(pos)
+    return pos.x <= mazeWidth and pos.y <= mazeHeight and pos.x > 0 and pos.y > 0
 end
 
 function isWall(pos)
-    return dungeon[pos.x][pos.y] == wallTile
+    return maze[pos.x][pos.y] == wallTile
 end
 
 function isPath(pos)
-    return dungeon[pos.x][pos.y] == floorTile
+    return maze[pos.x][pos.y] == floorTile
 end
 
 function setTile(pos, tileType)
-    dungeon[pos.x][pos.y] = tileType
+    maze[pos.x][pos.y] = tileType
 end
 
 function carve(pos)
@@ -63,7 +67,7 @@ function carve(pos)
 end
 
 function fill(pos)
-    dungeon[pos.x][pos.y] = wallTile
+    maze[pos.x][pos.y] = wallTile
 end
 
 function canCarve(pos)
@@ -112,7 +116,7 @@ function growMaze(startPos)
                 carve(neighborPos)
                 carve(nextNeighborTile)
                 add(positions, nextNeighborTile)
-                if drawStep then drawDungeon() end
+                if drawStep then drawmaze() end
                 index = nil
                 break
             end
@@ -124,8 +128,8 @@ function growMaze(startPos)
 end
 
 function growMazes()
-    for x = 1, dungeonWidth, 2 do
-        for y = 1, dungeonHeight, 2 do
+    for x = border, mazeWidth, 2 do
+        for y = border, mazeHeight, 2 do
             local pos = { x = x, y = y }
             if isWall(pos) then
                 growMaze(pos)
@@ -146,8 +150,8 @@ function addRooms()
         else
             h += rectangularity
         end
-        local x = intRnd((dungeonWidth - 1 - w) / 2) * 2 + 1
-        local y = intRnd((dungeonHeight - 1 - h) / 2) * 2 + 1
+        local x = intRnd((mazeWidth - border - w) / 2) * 2 + border
+        local y = intRnd((mazeHeight - border - h) / 2) * 2 + border
         local room = { x = x, y = y, w = w, h = h }
         local overlaps = false
         for other in all(rooms) do
@@ -162,7 +166,7 @@ function addRooms()
             for pos in all(getAllPositions(room)) do
                 carve(pos)
             end
-            if drawStep then drawDungeon() end
+            if drawStep then drawmaze() end
         end
     end
 end
@@ -171,7 +175,7 @@ function connectRegions()
     if drawStep then drawRegions() end
 
     forEachArr2D(
-        dungeon, function(x, y)
+        maze, function(x, y)
             if isWall({ x = x, y = y }) then
                 local _regions = {}
                 for _, direction in pairs(Direction.CARDINAL) do
@@ -201,7 +205,7 @@ function connectRegions()
     -- {{ x, y }}
 
     forEachArr2D(
-        dungeon, function(x, y)
+        maze, function(x, y)
             if connectorRegions[x][y] then
                 add(connectors, { x = x, y = y })
             end
@@ -220,7 +224,7 @@ function connectRegions()
 
         addJunction(connector)
 
-        local regions = map(
+        local regions = domap(
             connectorRegions[connector.x][connector.y], function(region)
                 return mergedRegions[region]
             end
@@ -245,7 +249,7 @@ function connectRegions()
                 if distanceBetween(connector, pos) < 2 then
                     return true
                 end
-                local regions = map(
+                local regions = domap(
                     connectorRegions[pos.x][pos.y], function(region)
                         return mergedRegions[region]
                     end
@@ -261,7 +265,7 @@ function connectRegions()
             end
         )
 
-        if drawStep then drawDungeon() end
+        if drawStep then drawmaze() end
     end
 end
 
@@ -270,7 +274,7 @@ function removeDeadEnds()
 
     -- add dead ends
     forEachArr2D(
-        dungeon, function(x, y)
+        maze, function(x, y)
             if not isWall({ x = x, y = y }) then
                 local exits = 0
                 for _, direction in pairs(Direction.CARDINAL) do
@@ -305,7 +309,7 @@ function removeDeadEnds()
             if #paths == 1 then
                 fill({ x = x, y = y })
                 addDeadEnd(paths[1])
-                if drawStep then drawDungeon() end
+                if drawStep then drawmaze() end
             end
             del(deadEnds, pos)
         end
@@ -316,11 +320,11 @@ function removeDeadEnds()
     end
 end
 
-function drawDungeon()
+function drawmaze()
     if rnd() > 0.9 then
         forEachArr2D(
-            dungeon, function(x, y)
-                pset(x, y, dungeon[x][y])
+            maze, function(x, y)
+                pset(x, y, maze[x][y])
             end
         )
     end
@@ -328,7 +332,7 @@ end
 
 function drawRegions()
     forEachArr2D(
-        dungeon, function(x, y)
+        maze, function(x, y)
             local region = regions[x][y]
             -- color between 0 and 15
             local color = region and (region % 15) + 1 or 0
@@ -343,7 +347,7 @@ end
 function drawConnections()
     if rnd() > 0.9 then
         forEachArr2D(
-            dungeon, function(x, y)
+            maze, function(x, y)
                 local regions = connectorRegions[x][y]
                 if regions then
                     if #regions == 2 then
@@ -364,4 +368,4 @@ _init = function()
     removeDeadEnds()
 end
 
-_draw = drawDungeon
+_draw = drawmaze

@@ -6,33 +6,37 @@ https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
 --]]
 
-function createMaze(width, height, tiles, hasBorder)
+
+function createMaze(config)
     -- Constants
-    local drawStep = true
-    local method = 3
+    local drawStep = config.drawStep or false
+    local method = config.method or 3
     -- chose_random = 1, chose_oldest = 2, chose_newest = 3
     local border = 1
+    local hasBorder = config.hasBorder or true
     -- 1 no border
+    local width = config.width or 128
+    local height = config.height or 64
     local mazeWidth = width - border
     local mazeHeight = height - border
     if hasBorder then
         border = 2
-        mazeWidth = width - border - 1
-        mazeHeight = height - border - 1
+        mazeWidth = width - 1
+        mazeHeight = height - 1
     end
 
     local numRoomTries = 1000
     -- number of rooms to try, the greater the number, the more rooms
-    local roomExtraSize = 1
-    local extraConnectorChance = 40
-    local exits = 2
+    local roomExtraSize = config.roomExtraSize or 1
+    local extraConnectorChance = config.extraConnectorChance or 20
+    local exits = config.exits or 2
 
     -- Tiles
-    local wallTile = tiles.wallTile
-    local floorTile = tiles.floorTile
-    local openDoorTile = tiles.openDoorTile
-    local closedDoorTile = tiles.closedDoorTile
-    local exitTile = tiles.exitTile
+    local wallTile = config.wallTile or 1
+    local floorTile = config.floorTile or 7
+    local openDoorTile = config.openDoorTile or 12
+    local closedDoorTile = config.closedDoorTile or 8
+    local exitTile = config.exitTile or 9
 
     local maze = create2DArr(mazeWidth, mazeHeight, wallTile)
     local regions = create2DArr(mazeWidth, mazeHeight, nil)
@@ -365,6 +369,8 @@ function createMaze(width, height, tiles, hasBorder)
                 del(deadEnds, pos)
             end
         end
+
+        pq("deadEnds", deadEnds)
 
         for _, pos in pairs(deadEnds) do
             setTile(pos, exitTile)

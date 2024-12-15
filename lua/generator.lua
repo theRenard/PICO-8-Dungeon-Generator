@@ -370,8 +370,6 @@ function createMaze(config)
             end
         end
 
-        pq("deadEnds", deadEnds)
-
         for _, pos in pairs(deadEnds) do
             setTile(pos, exitTile)
         end

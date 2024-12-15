@@ -1,4 +1,4 @@
-cls(3)
+cls()
 
 local dungeonWidth = 128
 local dungeonHeight = 64
@@ -6,6 +6,8 @@ local dungeon = {}
 
 function _init()
   dungeon = createMaze({
+    drawStep = true,
+    method = 2,
     width = dungeonWidth,
     height = dungeonHeight,
     exits = 4

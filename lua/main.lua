@@ -5,11 +5,12 @@ local dungeonHeight = 64
 local dungeon = {}
 
 function _init()
-  dungeon = createMaze({
+  dungeon, chambers = createMaze({
     drawStep = true,
     method = 2,
     width = dungeonWidth,
     height = dungeonHeight,
+    extraConnectorChance = 80,
     exits = 4
   })
   forEachArr2D(
@@ -17,6 +18,17 @@ function _init()
       mset(x - 1, y - 1, dungeon[x][y])
     end
   )
+  -- iterate over the chambers with pairs
+  for region, positions in pairs(chambers) do
+    -- iterate over the chamber's tiles with ipairs
+    for pos in all(positions) do
+      -- set the tile to a random floor tile
+      -- tile is from 2 to 7
+      local tile = region % 6 + 2
+      mset(pos.x - 1, pos.y - 1, tile)
+    end
+  end
+
 end
 
 -- the coordinates of the upper left corner of the camera
@@ -24,10 +36,10 @@ cam_x = 0
 cam_y = 0
 
 function _update()
-  if (btn(0) and cam_x > 0) cam_x -= 10
-  if (btn(1) and cam_x < (dungeonWidth * 8) - 128) cam_x += 10
-  if (btn(2) and cam_y > 0) cam_y -= 10
-  if (btn(3) and cam_y < (dungeonHeight * 8) - 128) cam_y += 10
+  if (btn(0) and cam_x > 0) cam_x -= 8
+  if (btn(1) and cam_x < (dungeonWidth * 8) - 128) cam_x += 8
+  if (btn(2) and cam_y > 0) cam_y -= 8
+  if (btn(3) and cam_y < (dungeonHeight * 8) - 128) cam_y += 8
 end
 
 function _draw()

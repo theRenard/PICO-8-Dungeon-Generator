@@ -19,6 +19,7 @@ function createMaze(config)
     local height = config.height or 64
     local mazeWidth = width - border
     local mazeHeight = height - border
+    local chambers = {}
     if hasBorder then
         border = 2
         mazeWidth = width - 1
@@ -214,8 +215,10 @@ function createMaze(config)
             if not overlaps then
                 add(rooms, room)
                 addRegion()
+                chambers[currentRegion] = {}
                 for pos in all(getAllPositions(room)) do
                     carve(pos)
+                    add(chambers[currentRegion], pos)
                 end
                 if drawStep then drawmaze() end
             end
@@ -380,5 +383,5 @@ function createMaze(config)
     connectRegions()
     removeDeadEnds()
 
-    return maze
+    return maze, chambers
 end

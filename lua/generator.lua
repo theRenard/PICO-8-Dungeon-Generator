@@ -1,52 +1,48 @@
 -- Copyright (c) 2024 Daniele Tabanella under the MIT license
 
---[[
-based on the articles:
-https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
-https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm
---]]
+--2220
+--17919
 
-
-function createMaze(config)
+function make_maze(cfg)
     -- Constants
-    local drawStep = config.drawStep or false
-    local method = config.method or 3
+    local draw = cfg.draw or false
+    local method = cfg.method or 3
     -- chose_random = 1, chose_oldest = 2, chose_newest = 3
-    local border = 1
-    local hasBorder = config.hasBorder or true
-    -- 1 no border
-    local width = config.width or 128
-    local height = config.height or 64
-    local mazeWidth = width - border
-    local mazeHeight = height - border
+    local brd = 1
+    local hasbrd = cfg.hasbrd or true
+    -- 1 no brd
+    local w = cfg.w or 128
+    local h = cfg.h or 64
+    local mz_w = w - brd
+    local mz_h = h - brd
     local chambers = {}
-    if hasBorder then
-        border = 2
-        mazeWidth = width - 1
-        mazeHeight = height - 1
+    if hasbrd then
+        brd = 2
+        mz_w = w - 1
+        mz_h = h - 1
     end
 
-    local numRoomTries = 1000
+    local tries = 1000
     -- number of rooms to try, the greater the number, the more rooms
-    local roomExtraSize = config.roomExtraSize or 1
-    local extraConnectorChance = config.extraConnectorChance or 20
-    local exits = config.exits or 2
+    local xtrsz = cfg.xtrsz or 1
+    local xtrconn = cfg.xtrconn or 20
+    local exits = cfg.exits or 2
 
     -- Tiles
-    local wallTile = config.wallTile or 1
-    local floorTile = config.floorTile or 7
-    local openDoorTile = config.openDoorTile or 12
-    local closedDoorTile = config.closedDoorTile or 8
-    local exitTile = config.exitTile or 9
+    local wl_tl = cfg.wl_tl or 1
+    local flr_tl = cfg.flr_tl or 7
+    local op_tl = cfg.op_tl or 12
+    local csd_tl = cfg.csd_tl or 8
+    local xt_tl = cfg.xt_tl or 9
 
-    local maze = create2DArr(mazeWidth, mazeHeight, wallTile)
-    local regions = create2DArr(mazeWidth, mazeHeight, nil)
-    local connectorRegions = create2DArr(mazeWidth, mazeHeight, nil)
-    local deadEnds = {}
+    local maze = mk2darr(mz_w, mz_h, wl_tl)
+    local rgn = mk2darr(mz_w, mz_h, nil)
+    local con_rgn = mk2darr(mz_w, mz_h, nil)
+    local dd_ends = {}
 
-    local currentRegion = 0
+    local cr_rgn = 0
 
-    local function choseIndex(ceil)
+    local function chose_index(ceil)
         if method == 1 then
             return flr(rnd(ceil)) + 1
         elseif method == 2 then
@@ -56,58 +52,58 @@ function createMaze(config)
         end
     end
 
-    local function isInBounds(pos)
-        return pos.x <= mazeWidth and pos.y <= mazeHeight and pos.x > 0 and pos.y > 0
+    local function in_bounds(pos)
+        return pos.x <= mz_w and pos.y <= mz_h and pos.x > 0 and pos.y > 0
     end
 
-    local function isWall(pos)
-        return maze[pos.x][pos.y] == wallTile
+    local function is_wall(pos)
+        return maze[pos.x][pos.y] == wl_tl
     end
 
-    local function isPath(pos)
-        return maze[pos.x][pos.y] == floorTile
+    local function is_path(pos)
+        return maze[pos.x][pos.y] == flr_tl
     end
 
-    local function setTile(pos, tileType)
-        maze[pos.x][pos.y] = tileType
+    local function set_tl(pos, tl_ty)
+        maze[pos.x][pos.y] = tl_ty
     end
 
     local function carve(pos)
-        setTile(pos, floorTile)
-        regions[pos.x][pos.y] = currentRegion
+        set_tl(pos, flr_tl)
+        rgn[pos.x][pos.y] = cr_rgn
     end
 
     local function fill(pos)
-        maze[pos.x][pos.y] = wallTile
+        maze[pos.x][pos.y] = wl_tl
     end
 
-    local function canCarve(pos)
-        return isInBounds(pos) and isWall(pos)
+    local function can_carve(pos)
+        return in_bounds(pos) and is_wall(pos)
     end
 
-    local function addRegion()
-        currentRegion += 1
+    local function add_rgn()
+        cr_rgn += 1
     end
 
-    local function addDeadEnd(pos)
-        add(deadEnds, pos)
+    local function add_dend(pos)
+        add(dd_ends, pos)
     end
 
-    local function addJunction(pos)
-        if oneIn(4) then
-            if oneIn(3) then
-                setTile(pos, openDoorTile)
+    local function add_junc(pos)
+        if one_in(4) then
+            if one_in(3) then
+                set_tl(pos, op_tl)
             else
-                setTile(pos, floorTile)
+                set_tl(pos, flr_tl)
             end
         else
-            setTile(pos, closedDoorTile)
+            set_tl(pos, csd_tl)
         end
     end
 
-    local function drawmaze()
+    local function draw_maze()
         if rnd() > 0.9 then
-            forEachArr2D(
+            foreach_2darr(
                 maze, function(x, y)
                     pset(x - 1, y - 1, maze[x][y])
                 end
@@ -115,10 +111,10 @@ function createMaze(config)
         end
     end
 
-    local function drawRegions()
-        forEachArr2D(
+    local function draw_rgn()
+        foreach_2darr(
             maze, function(x, y)
-                local region = regions[x][y]
+                local region = rgn[x][y]
                 -- color between 0 and 15
                 local color = region and (region % 15) + 1 or 0
                 if color == 9 or color == 10 then
@@ -129,13 +125,13 @@ function createMaze(config)
         )
     end
 
-    local function drawConnections()
+    local function draw_connections()
         if rnd() > 0.9 then
-            forEachArr2D(
+            foreach_2darr(
                 maze, function(x, y)
-                    local regions = connectorRegions[x][y]
-                    if regions then
-                        if #regions == 2 then
+                    local rgn = con_rgn[x][y]
+                    if rgn then
+                        if #rgn == 2 then
                             pset(x - 1, y, 9)
                         else
                             pset(x - 1, y, 10)
@@ -146,17 +142,17 @@ function createMaze(config)
         end
     end
 
-    local function growMaze(startPos)
-        addRegion()
-        local positions = {}
-        carve(startPos)
-        add(positions, startPos)
+    local function grow_maze(str_pos)
+        add_rgn()
+        local posn = {}
+        carve(str_pos)
+        add(posn, str_pos)
 
-        while #positions > 0 do
-            local index = choseIndex(#positions)
-            local currentPos = positions[index]
-            for _, direction in pairs(shuffle(Direction.CARDINAL)) do
-                local neighborPos = {
+        while #posn > 0 do
+            local index = chose_index(#posn)
+            local currentPos = posn[index]
+            for _, direction in pairs(shuffle(direction.cardinal)) do
+                local ngbPos = {
                     x = currentPos.x + direction.x,
                     y = currentPos.y + direction.y
                 }
@@ -164,224 +160,224 @@ function createMaze(config)
                     x = currentPos.x + direction.x * 2,
                     y = currentPos.y + direction.y * 2
                 }
-                if canCarve(neighborPos) and canCarve(nextNeighborTile) then
-                    carve(neighborPos)
+                if can_carve(ngbPos) and can_carve(nextNeighborTile) then
+                    carve(ngbPos)
                     carve(nextNeighborTile)
-                    add(positions, nextNeighborTile)
-                    if drawStep then drawmaze() end
+                    add(posn, nextNeighborTile)
+                    if draw then draw_maze() end
                     index = nil
                     break
                 end
             end
             if index then
-                del(positions, currentPos)
+                del(posn, currentPos)
             end
         end
     end
 
-    local function growMazes()
-        for x = border, mazeWidth, 2 do
-            for y = border, mazeHeight, 2 do
+    local function grow_mazes()
+        for x = brd, mz_w, 2 do
+            for y = brd, mz_h, 2 do
                 local pos = { x = x, y = y }
-                if isWall(pos) then
-                    growMaze(pos)
+                if is_wall(pos) then
+                    grow_maze(pos)
                 end
             end
         end
     end
 
-    local function addRooms()
+    local function add_rooms()
         local rooms = {}
-        for i = 0, numRoomTries do
-            local size = intRnd(2 + roomExtraSize) * 2 + 5
-            local rectangularity = intRnd(1 + size / 2) * 2
+        for i = 0, tries do
+            local size = int_rnd(2 + xtrsz) * 2 + 5
+            local recty = int_rnd(1 + size / 2) * 2
             local w = size
             local h = size
-            if oneIn(2) then
-                w += rectangularity
+            if one_in(2) then
+                w += recty
             else
-                h += rectangularity
+                h += recty
             end
-            local x = intRnd((mazeWidth - border - w) / 2) * 2 + border
-            local y = intRnd((mazeHeight - border - h) / 2) * 2 + border
+            local x = int_rnd((mz_w - brd - w) / 2) * 2 + brd
+            local y = int_rnd((mz_h - brd - h) / 2) * 2 + brd
             local room = { x = x, y = y, w = w, h = h }
             local overlaps = false
             for other in all(rooms) do
-                if distanceTo(room, other) <= 0 then
+                if dst_to(room, other) <= 0 then
                     overlaps = true
                     break
                 end
             end
             if not overlaps then
                 add(rooms, room)
-                addRegion()
-                chambers[currentRegion] = {}
-                for pos in all(getAllPositions(room)) do
+                add_rgn()
+                chambers[cr_rgn] = {}
+                for pos in all(get_all_posn(room)) do
                     carve(pos)
-                    add(chambers[currentRegion], pos)
+                    add(chambers[cr_rgn], pos)
                 end
-                if drawStep then drawmaze() end
+                if draw then draw_maze() end
             end
         end
     end
 
-    local function connectRegions()
-        if drawStep then drawRegions() end
+    local function connect_rgn()
+        if draw then draw_rgn() end
 
-        forEachArr2D(
+        foreach_2darr(
             maze, function(x, y)
-                if isWall({ x = x, y = y }) then
-                    local _regions = {}
-                    for _, direction in pairs(Direction.CARDINAL) do
-                        local neighborPos = {
+                if is_wall({ x = x, y = y }) then
+                    local _rgn = {}
+                    for _, direction in pairs(direction.cardinal) do
+                        local ngbPos = {
                             x = x + direction.x,
                             y = y + direction.y
                         }
-                        if isInBounds(neighborPos) then
-                            local _region = regions[neighborPos.x][neighborPos.y]
-                            if _region and not contains(_regions, _region) then
-                                add(_regions, _region)
+                        if in_bounds(ngbPos) then
+                            local _region = rgn[ngbPos.x][ngbPos.y]
+                            if _region and not contains(_rgn, _region) then
+                                add(_rgn, _region)
                             end
                         end
                     end
-                    if #_regions >= 2 then
-                        connectorRegions[x][y] = _regions
+                    if #_rgn >= 2 then
+                        con_rgn[x][y] = _rgn
                     end
                 end
             end
         )
 
-        if drawStep then
-            drawConnections()
+        if draw then
+            draw_connections()
         end
 
-        local connectors = {}
+        local cons = {}
         -- {{ x, y }}
 
-        forEachArr2D(
+        foreach_2darr(
             maze, function(x, y)
-                if connectorRegions[x][y] then
-                    add(connectors, { x = x, y = y })
+                if con_rgn[x][y] then
+                    add(cons, { x = x, y = y })
                 end
             end
         )
 
-        local mergedRegions = {}
-        local unMergedRegions = {}
-        for i = 1, currentRegion do
-            mergedRegions[i] = i
-            unMergedRegions[i] = i
+        local mgd_rgns = {}
+        local un_mgd_rgns = {}
+        for i = 1, cr_rgn do
+            mgd_rgns[i] = i
+            un_mgd_rgns[i] = i
         end
 
-        while #unMergedRegions > 1 do
-            local connector = getRandomItem(connectors)
+        while #un_mgd_rgns > 1 do
+            local connector = get_rnd_item(cons)
 
-            addJunction(connector)
+            add_junc(connector)
 
-            local regions = domap(
-                connectorRegions[connector.x][connector.y], function(region)
-                    return mergedRegions[region]
+            local rgn = do_map(
+                con_rgn[connector.x][connector.y], function(region)
+                    return mgd_rgns[region]
                 end
             )
 
-            local dest = regions[1]
+            local dest = rgn[1]
 
-            local sources = slice(regions, 2)
+            local sources = slice(rgn, 2)
 
-            for i = 1, currentRegion do
-                if contains(sources, mergedRegions[i]) then
-                    mergedRegions[i] = dest
+            for i = 1, cr_rgn do
+                if contains(sources, mgd_rgns[i]) then
+                    mgd_rgns[i] = dest
                 end
             end
 
             for source in all(sources) do
-                del(unMergedRegions, source)
+                del(un_mgd_rgns, source)
             end
 
-            removeWhere(
-                connectors, function(pos)
-                    if distanceBetween(connector, pos) < 2 then
+            rmv_where(
+                cons, function(pos)
+                    if dst_btw(connector, pos) < 2 then
                         return true
                     end
-                    local regions = domap(
-                        connectorRegions[pos.x][pos.y], function(region)
-                            return mergedRegions[region]
+                    local rgn = do_map(
+                        con_rgn[pos.x][pos.y], function(region)
+                            return mgd_rgns[region]
                         end
                     )
-                    regions = removeDup(regions)
-                    if #regions > 1 then
+                    rgn = rmv_dup(rgn)
+                    if #rgn > 1 then
                         return false
                     end
-                    if oneIn(extraConnectorChance) then
-                        addJunction(pos)
+                    if one_in(xtrconn) then
+                        add_junc(pos)
                     end
                     return true
                 end
             )
 
-            if drawStep then drawmaze() end
+            if draw then draw_maze() end
         end
     end
 
-    local function removeDeadEnds()
+    local function rmv_dends()
         local done = false
 
         -- add dead ends
-        forEachArr2D(
+        foreach_2darr(
             maze, function(x, y)
-                if not isWall({ x = x, y = y }) then
+                if not is_wall({ x = x, y = y }) then
                     local exits = 0
-                    for _, direction in pairs(Direction.CARDINAL) do
-                        local neighborPos = {
+                    for _, direction in pairs(direction.cardinal) do
+                        local ngbPos = {
                             x = x + direction.x,
                             y = y + direction.y
                         }
-                        if isInBounds(neighborPos) then
-                            if not isWall(neighborPos) then
+                        if in_bounds(ngbPos) then
+                            if not is_wall(ngbPos) then
                                 exits += 1
                             end
                         end
                     end
                     if exits == 1 then
-                        addDeadEnd({ x = x, y = y })
+                        add_dend({ x = x, y = y })
                     end
                 end
             end
         )
 
-        while #deadEnds > exits do
-            for _, pos in pairs(deadEnds) do
+        while #dd_ends > exits do
+            for _, pos in pairs(dd_ends) do
                 local x, y = pos.x, pos.y
                 local paths = {}
-                for _, direction in pairs(Direction.CARDINAL) do
-                    local neighborPos = {
+                for _, direction in pairs(direction.cardinal) do
+                    local ngbPos = {
                         x = x + direction.x,
                         y = y + direction.y
                     }
-                    if isInBounds(neighborPos) then
-                        if not isWall(neighborPos) then
-                            add(paths, neighborPos)
+                    if in_bounds(ngbPos) then
+                        if not is_wall(ngbPos) then
+                            add(paths, ngbPos)
                         end
                     end
                 end
                 if #paths == 1 then
                     fill({ x = x, y = y })
-                    addDeadEnd(paths[1])
-                    if drawStep then drawmaze() end
+                    add_dend(paths[1])
+                    if draw then draw_maze() end
                 end
-                del(deadEnds, pos)
+                del(dd_ends, pos)
             end
         end
 
-        for _, pos in pairs(deadEnds) do
-            setTile(pos, exitTile)
+        for _, pos in pairs(dd_ends) do
+            set_tl(pos, xt_tl)
         end
     end
 
-    addRooms()
-    growMazes()
-    connectRegions()
-    removeDeadEnds()
+    add_rooms()
+    grow_mazes()
+    connect_rgn()
+    rmv_dends()
 
     return maze, chambers
 end

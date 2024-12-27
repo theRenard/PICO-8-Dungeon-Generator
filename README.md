@@ -19,9 +19,9 @@ You can configure the dungeon generator by modifying the parameters in the code.
   - `3`: Choose newest
 - `dungeonWidth`: The width of the dungeon.
 - `dungeonHeight`: The height of the dungeon.
-- `numRoomTries`: The number of rooms to try. The greater the number, the more rooms.
-- `roomExtraSize`: Additional size for rooms.
-- `extraConnectorChance`: The chance of adding extra connectors between rooms.
+- `tries`: The number of rooms to try. The greater the number, the more rooms.
+- `xtrsz`: Additional size for rooms.
+- `xtrconn`: The chance of adding extra cons between rooms.
 - `exits`: The number of exits to create. Set to `0` for a perfect maze.
 
 ## Examples

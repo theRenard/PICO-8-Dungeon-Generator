@@ -5,23 +5,23 @@ local dungeonHeight = 64
 local dungeon = {}
 
 function _init()
-  dungeon, chambers = createMaze({
-    drawStep = true,
+  dungeon, chambers = make_maze({
+    draw = true,
     method = 2,
-    width = dungeonWidth,
-    height = dungeonHeight,
-    extraConnectorChance = 80,
+    w = dungeonWidth,
+    h = dungeonHeight,
+    xtrconn = 80,
     exits = 4
   })
-  forEachArr2D(
+  foreach_2darr(
     dungeon, function(x, y)
       mset(x - 1, y - 1, dungeon[x][y])
     end
   )
   -- iterate over the chambers with pairs
-  for region, positions in pairs(chambers) do
+  for region, posn in pairs(chambers) do
     -- iterate over the chamber's tiles with ipairs
-    for pos in all(positions) do
+    for pos in all(posn) do
       -- set the tile to a random floor tile
       -- tile is from 2 to 7
       local tile = region % 6 + 2
@@ -51,7 +51,7 @@ function _draw()
   -- the camera and clipping region to decide
   -- what is shown
   map(0, 0, 0, 0, dungeonWidth, dungeonHeight)
-  forEachArr2D(
+  foreach_2darr(
     dungeon, function(x, y)
       pset(x - 1, y - 1, dungeon[x][y])
     end

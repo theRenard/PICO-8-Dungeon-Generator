@@ -12,7 +12,7 @@ function make_mz(cfg)
 
     -- Tiles
     local wl_tl, flr_tl, op_tl, csd_tl, xt_tl = cfg.wl_tl or 1, cfg.flr_tl or 7, cfg.op_tl or 12, cfg.csd_tl or 8, cfg.xt_tl or 9
-    local mz, rgn, con_rgn, dd_ends, cr_rgn = mk2darr(mz_w, mz_h, wl_tl), mk2darr(mz_w, mz_h, nil), mk2darr(mz_w, mz_h, nil), {}, 0
+    local mz, rgn, con_rgn, dd_ends, cr_rgn = mk2darr(mz_w, mz_h, wl_tl), mk2darr(mz_w, mz_h), mk2darr(mz_w, mz_h), {}, 0
 
     local function chs_idx(ceil)
         return mth == 1 and flr(rnd(ceil)) + 1 or mth == 2 and 1 or ceil
@@ -56,15 +56,11 @@ function make_mz(cfg)
     end
 
     local function add_junc(pos)
+        local tile_type = csd_tl
         if one_in(4) then
-            if one_in(3) then
-                set_tl(pos, op_tl)
-            else
-                set_tl(pos, flr_tl)
-            end
-        else
-            set_tl(pos, csd_tl)
+            tile_type = one_in(3) and op_tl or flr_tl
         end
+        set_tl(pos, tile_type)
     end
 
     local function draw_mz()

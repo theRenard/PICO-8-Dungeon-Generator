@@ -5,9 +5,10 @@ local dungeonHeight = 64
 local dungeon = {}
 
 function _init()
-  dungeon, chambers = make_maze({
+  dungeon, chambers = make_mz({
     draw = true,
-    method = 2,
+    mth = 2,
+    hasbrd = false,
     w = dungeonWidth,
     h = dungeonHeight,
     xtrconn = 80,

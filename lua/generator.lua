@@ -3,13 +3,16 @@
 --2220
 --17919
 
-function make_maze(cfg)
+function make_mz(cfg)
     -- Constants
     local draw = cfg.draw or false
-    local method = cfg.method or 3
+    local mth = cfg.mth or 3
     -- chose_random = 1, chose_oldest = 2, chose_newest = 3
     local brd = 1
-    local hasbrd = cfg.hasbrd or true
+    local hasbrd = true
+    if cfg.hasbrd != nil then
+        hasbrd = cfg.hasbrd
+    end
     -- 1 no brd
     local w = cfg.w or 128
     local h = cfg.h or 64
@@ -23,7 +26,7 @@ function make_maze(cfg)
     end
 
     local tries = 1000
-    -- number of rooms to try, the greater the number, the more rooms
+    -- number of rms to try, the greater the number, the more rms
     local xtrsz = cfg.xtrsz or 1
     local xtrconn = cfg.xtrconn or 20
     local exits = cfg.exits or 2
@@ -35,19 +38,19 @@ function make_maze(cfg)
     local csd_tl = cfg.csd_tl or 8
     local xt_tl = cfg.xt_tl or 9
 
-    local maze = mk2darr(mz_w, mz_h, wl_tl)
+    local mz = mk2darr(mz_w, mz_h, wl_tl)
     local rgn = mk2darr(mz_w, mz_h, nil)
     local con_rgn = mk2darr(mz_w, mz_h, nil)
     local dd_ends = {}
 
     local cr_rgn = 0
 
-    local function chose_index(ceil)
-        if method == 1 then
+    local function chs_idx(ceil)
+        if mth == 1 then
             return flr(rnd(ceil)) + 1
-        elseif method == 2 then
+        elseif mth == 2 then
             return 1
-        elseif method == 3 then
+        elseif mth == 3 then
             return ceil
         end
     end
@@ -57,27 +60,27 @@ function make_maze(cfg)
     end
 
     local function is_wall(pos)
-        return maze[pos.x][pos.y] == wl_tl
+        return mz[pos.x][pos.y] == wl_tl
     end
 
     local function is_path(pos)
-        return maze[pos.x][pos.y] == flr_tl
+        return mz[pos.x][pos.y] == flr_tl
     end
 
     local function set_tl(pos, tl_ty)
-        maze[pos.x][pos.y] = tl_ty
+        mz[pos.x][pos.y] = tl_ty
     end
 
-    local function carve(pos)
+    local function crv(pos)
         set_tl(pos, flr_tl)
         rgn[pos.x][pos.y] = cr_rgn
     end
 
     local function fill(pos)
-        maze[pos.x][pos.y] = wl_tl
+        mz[pos.x][pos.y] = wl_tl
     end
 
-    local function can_carve(pos)
+    local function can_crv(pos)
         return in_bounds(pos) and is_wall(pos)
     end
 
@@ -101,11 +104,11 @@ function make_maze(cfg)
         end
     end
 
-    local function draw_maze()
+    local function draw_mz()
         if rnd() > 0.9 then
             foreach_2darr(
-                maze, function(x, y)
-                    pset(x - 1, y - 1, maze[x][y])
+                mz, function(x, y)
+                    pset(x - 1, y - 1, mz[x][y])
                 end
             )
         end
@@ -113,10 +116,10 @@ function make_maze(cfg)
 
     local function draw_rgn()
         foreach_2darr(
-            maze, function(x, y)
-                local region = rgn[x][y]
+            mz, function(x, y)
+                local _rgn = rgn[x][y]
                 -- color between 0 and 15
-                local color = region and (region % 15) + 1 or 0
+                local color = _rgn and (_rgn % 15) + 1 or 0
                 if color == 9 or color == 10 then
                     color = 11
                 end
@@ -128,7 +131,7 @@ function make_maze(cfg)
     local function draw_connections()
         if rnd() > 0.9 then
             foreach_2darr(
-                maze, function(x, y)
+                mz, function(x, y)
                     local rgn = con_rgn[x][y]
                     if rgn then
                         if #rgn == 2 then
@@ -142,52 +145,52 @@ function make_maze(cfg)
         end
     end
 
-    local function grow_maze(str_pos)
+    local function grow_mz(str_pos)
         add_rgn()
         local posn = {}
-        carve(str_pos)
+        crv(str_pos)
         add(posn, str_pos)
 
         while #posn > 0 do
-            local index = chose_index(#posn)
-            local currentPos = posn[index]
-            for _, direction in pairs(shuffle(direction.cardinal)) do
+            local index = chs_idx(#posn)
+            local curr_pos = posn[index]
+            for _, dir in pairs(shuffle(dir.card)) do
                 local ngbPos = {
-                    x = currentPos.x + direction.x,
-                    y = currentPos.y + direction.y
+                    x = curr_pos.x + dir.x,
+                    y = curr_pos.y + dir.y
                 }
-                local nextNeighborTile = {
-                    x = currentPos.x + direction.x * 2,
-                    y = currentPos.y + direction.y * 2
+                local nxt_ngb_tl = {
+                    x = curr_pos.x + dir.x * 2,
+                    y = curr_pos.y + dir.y * 2
                 }
-                if can_carve(ngbPos) and can_carve(nextNeighborTile) then
-                    carve(ngbPos)
-                    carve(nextNeighborTile)
-                    add(posn, nextNeighborTile)
-                    if draw then draw_maze() end
+                if can_crv(ngbPos) and can_crv(nxt_ngb_tl) then
+                    crv(ngbPos)
+                    crv(nxt_ngb_tl)
+                    add(posn, nxt_ngb_tl)
+                    if draw then draw_mz() end
                     index = nil
                     break
                 end
             end
             if index then
-                del(posn, currentPos)
+                del(posn, curr_pos)
             end
         end
     end
 
-    local function grow_mazes()
+    local function grow_mzs()
         for x = brd, mz_w, 2 do
             for y = brd, mz_h, 2 do
                 local pos = { x = x, y = y }
                 if is_wall(pos) then
-                    grow_maze(pos)
+                    grow_mz(pos)
                 end
             end
         end
     end
 
-    local function add_rooms()
-        local rooms = {}
+    local function add_rms()
+        local rms = {}
         for i = 0, tries do
             local size = int_rnd(2 + xtrsz) * 2 + 5
             local recty = int_rnd(1 + size / 2) * 2
@@ -200,38 +203,38 @@ function make_maze(cfg)
             end
             local x = int_rnd((mz_w - brd - w) / 2) * 2 + brd
             local y = int_rnd((mz_h - brd - h) / 2) * 2 + brd
-            local room = { x = x, y = y, w = w, h = h }
+            local rm = { x = x, y = y, w = w, h = h }
             local overlaps = false
-            for other in all(rooms) do
-                if dst_to(room, other) <= 0 then
+            for other in all(rms) do
+                if dst_to(rm, other) <= 0 then
                     overlaps = true
                     break
                 end
             end
             if not overlaps then
-                add(rooms, room)
+                add(rms, rm)
                 add_rgn()
                 chambers[cr_rgn] = {}
-                for pos in all(get_all_posn(room)) do
-                    carve(pos)
+                for pos in all(get_all_posn(rm)) do
+                    crv(pos)
                     add(chambers[cr_rgn], pos)
                 end
-                if draw then draw_maze() end
+                if draw then draw_mz() end
             end
         end
     end
 
-    local function connect_rgn()
+    local function conn_rgn()
         if draw then draw_rgn() end
 
         foreach_2darr(
-            maze, function(x, y)
+            mz, function(x, y)
                 if is_wall({ x = x, y = y }) then
                     local _rgn = {}
-                    for _, direction in pairs(direction.cardinal) do
+                    for _, dir in pairs(dir.card) do
                         local ngbPos = {
-                            x = x + direction.x,
-                            y = y + direction.y
+                            x = x + dir.x,
+                            y = y + dir.y
                         }
                         if in_bounds(ngbPos) then
                             local _region = rgn[ngbPos.x][ngbPos.y]
@@ -255,7 +258,7 @@ function make_maze(cfg)
         -- {{ x, y }}
 
         foreach_2darr(
-            maze, function(x, y)
+            mz, function(x, y)
                 if con_rgn[x][y] then
                     add(cons, { x = x, y = y })
                 end
@@ -270,12 +273,12 @@ function make_maze(cfg)
         end
 
         while #un_mgd_rgns > 1 do
-            local connector = get_rnd_item(cons)
+            local conn = get_rnd_item(cons)
 
-            add_junc(connector)
+            add_junc(conn)
 
             local rgn = do_map(
-                con_rgn[connector.x][connector.y], function(region)
+                con_rgn[conn.x][conn.y], function(region)
                     return mgd_rgns[region]
                 end
             )
@@ -296,7 +299,7 @@ function make_maze(cfg)
 
             rmv_where(
                 cons, function(pos)
-                    if dst_btw(connector, pos) < 2 then
+                    if dst_btw(conn, pos) < 2 then
                         return true
                     end
                     local rgn = do_map(
@@ -315,7 +318,7 @@ function make_maze(cfg)
                 end
             )
 
-            if draw then draw_maze() end
+            if draw then draw_mz() end
         end
     end
 
@@ -324,13 +327,13 @@ function make_maze(cfg)
 
         -- add dead ends
         foreach_2darr(
-            maze, function(x, y)
+            mz, function(x, y)
                 if not is_wall({ x = x, y = y }) then
                     local exits = 0
-                    for _, direction in pairs(direction.cardinal) do
+                    for _, dir in pairs(dir.card) do
                         local ngbPos = {
-                            x = x + direction.x,
-                            y = y + direction.y
+                            x = x + dir.x,
+                            y = y + dir.y
                         }
                         if in_bounds(ngbPos) then
                             if not is_wall(ngbPos) then
@@ -349,10 +352,10 @@ function make_maze(cfg)
             for _, pos in pairs(dd_ends) do
                 local x, y = pos.x, pos.y
                 local paths = {}
-                for _, direction in pairs(direction.cardinal) do
+                for _, dir in pairs(dir.card) do
                     local ngbPos = {
-                        x = x + direction.x,
-                        y = y + direction.y
+                        x = x + dir.x,
+                        y = y + dir.y
                     }
                     if in_bounds(ngbPos) then
                         if not is_wall(ngbPos) then
@@ -363,7 +366,7 @@ function make_maze(cfg)
                 if #paths == 1 then
                     fill({ x = x, y = y })
                     add_dend(paths[1])
-                    if draw then draw_maze() end
+                    if draw then draw_mz() end
                 end
                 del(dd_ends, pos)
             end
@@ -374,10 +377,10 @@ function make_maze(cfg)
         end
     end
 
-    add_rooms()
-    grow_mazes()
-    connect_rgn()
+    add_rms()
+    grow_mzs()
+    conn_rgn()
     rmv_dends()
 
-    return maze, chambers
+    return mz, chambers
 end

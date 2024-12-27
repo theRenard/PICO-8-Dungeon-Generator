@@ -26,18 +26,18 @@ end
 -- length that a corridor would have to be to go from one Rect to the other.
 -- If the two Rects are adjacent, returns zero. If they overlap, returns -1.
 function dst_to(r1, r2)
-	if r1.y >= (r2.y + r2.h) then
+	local v, h
+	if r1.y >= r2.y + r2.h then
 		v = r1.y - (r2.y + r2.h)
-	elseif (r1.y + r1.h) <= r2.y then
+	elseif r1.y + r1.h <= r2.y then
 		v = r2.y - (r1.y + r1.h)
 	else
 		v = -1
 	end
 
-	local h = nil
-	if r1.x >= (r2.x + r2.w) then
+	if r1.x >= r2.x + r2.w then
 		h = r1.x - (r2.x + r2.w)
-	elseif (r1.x + r1.w) <= r2.x then
+	elseif r1.x + r1.w <= r2.x then
 		h = r2.x - (r1.x + r1.w)
 	else
 		h = -1
@@ -61,10 +61,7 @@ end
 
 -- overlaps
 function rect_overlaps(r, r2)
-	return r.x < r2.x + r2.w
-			and r.x + r.w > r2.x
-			and r.y < r2.y + r2.h
-			and r.y + r.h > r2.y
+	return r.x < r2.x + r2.w and r.x + r.w > r2.x and r.y < r2.y + r2.h and r.y + r.h > r2.y
 end
 
 function get_all_posn(r)
@@ -152,8 +149,7 @@ function rmv_where(tbl, func)
 end
 
 function rmv_dup(tbl)
-	local set = {}
-	local newtbl = {}
+	local set, newtbl = {}, {}
 	for _, v in pairs(tbl) do
 		if not set[v] then
 			add(newtbl, v)
@@ -170,5 +166,3 @@ function slice(tbl, start, finish)
 	end
 	return newtbl
 end
-
-

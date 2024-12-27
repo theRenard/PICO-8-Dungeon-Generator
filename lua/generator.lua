@@ -5,54 +5,17 @@
 
 function make_mz(cfg)
     -- Constants
-    local draw = cfg.draw or false
-    local mth = cfg.mth or 3
-    -- chose_random = 1, chose_oldest = 2, chose_newest = 3
-    local brd = 1
-    local hasbrd = true
-    if cfg.hasbrd != nil then
-        hasbrd = cfg.hasbrd
-    end
-    -- 1 no brd
-    local w = cfg.w or 128
-    local h = cfg.h or 64
-    local mz_w = w - brd
-    local mz_h = h - brd
-    local chambers = {}
-    if hasbrd then
-        brd = 2
-        mz_w = w - 1
-        mz_h = h - 1
-    end
-
-    local tries = 1000
-    -- number of rms to try, the greater the number, the more rms
-    local xtrsz = cfg.xtrsz or 1
-    local xtrconn = cfg.xtrconn or 20
-    local exits = cfg.exits or 2
+    local draw, mth = cfg.draw or false, cfg.mth or 3
+    local brd, w, h = cfg.hasbrd == false and 1 or 2, cfg.w or 128, cfg.h or 64
+    local mz_w, mz_h, chambers = w - brd, h - brd, {}
+    local tries, xtrsz, xtrconn, exits = 1000, cfg.xtrsz or 1, cfg.xtrconn or 20, cfg.exits or 2
 
     -- Tiles
-    local wl_tl = cfg.wl_tl or 1
-    local flr_tl = cfg.flr_tl or 7
-    local op_tl = cfg.op_tl or 12
-    local csd_tl = cfg.csd_tl or 8
-    local xt_tl = cfg.xt_tl or 9
-
-    local mz = mk2darr(mz_w, mz_h, wl_tl)
-    local rgn = mk2darr(mz_w, mz_h, nil)
-    local con_rgn = mk2darr(mz_w, mz_h, nil)
-    local dd_ends = {}
-
-    local cr_rgn = 0
+    local wl_tl, flr_tl, op_tl, csd_tl, xt_tl = cfg.wl_tl or 1, cfg.flr_tl or 7, cfg.op_tl or 12, cfg.csd_tl or 8, cfg.xt_tl or 9
+    local mz, rgn, con_rgn, dd_ends, cr_rgn = mk2darr(mz_w, mz_h, wl_tl), mk2darr(mz_w, mz_h, nil), mk2darr(mz_w, mz_h, nil), {}, 0
 
     local function chs_idx(ceil)
-        if mth == 1 then
-            return flr(rnd(ceil)) + 1
-        elseif mth == 2 then
-            return 1
-        elseif mth == 3 then
-            return ceil
-        end
+        return mth == 1 and flr(rnd(ceil)) + 1 or mth == 2 and 1 or ceil
     end
 
     local function in_bounds(pos)
@@ -117,9 +80,8 @@ function make_mz(cfg)
     local function draw_rgn()
         foreach_2darr(
             mz, function(x, y)
-                local _rgn = rgn[x][y]
+                local _rgn, color = rgn[x][y], _rgn and (_rgn % 15) + 1 or 0
                 -- color between 0 and 15
-                local color = _rgn and (_rgn % 15) + 1 or 0
                 if color == 9 or color == 10 then
                     color = 11
                 end
@@ -155,11 +117,11 @@ function make_mz(cfg)
             local index = chs_idx(#posn)
             local curr_pos = posn[index]
             for _, dir in pairs(shuffle(dir.card)) do
-                local ngbPos = {
+                local ngbPos, nxt_ngb_tl = {
                     x = curr_pos.x + dir.x,
                     y = curr_pos.y + dir.y
-                }
-                local nxt_ngb_tl = {
+                },
+                {
                     x = curr_pos.x + dir.x * 2,
                     y = curr_pos.y + dir.y * 2
                 }
@@ -192,17 +154,16 @@ function make_mz(cfg)
     local function add_rms()
         local rms = {}
         for i = 0, tries do
-            local size = int_rnd(2 + xtrsz) * 2 + 5
-            local recty = int_rnd(1 + size / 2) * 2
-            local w = size
-            local h = size
+            local size = (int_rnd(2 + xtrsz) + 2) * 2 + 1
+            local recty = int_rnd(size / 2) * 2
+            local w, h = size, size
             if one_in(2) then
                 w += recty
             else
                 h += recty
             end
-            local x = int_rnd((mz_w - brd - w) / 2) * 2 + brd
-            local y = int_rnd((mz_h - brd - h) / 2) * 2 + brd
+            local x = int_rnd((mz_w - w) / 2) * 2 + brd
+            local y = int_rnd((mz_h - h) / 2) * 2 + brd
             local rm = { x = x, y = y, w = w, h = h }
             local overlaps = false
             for other in all(rms) do
@@ -265,8 +226,7 @@ function make_mz(cfg)
             end
         )
 
-        local mgd_rgns = {}
-        local un_mgd_rgns = {}
+        local mgd_rgns, un_mgd_rgns = {}, {}
         for i = 1, cr_rgn do
             mgd_rgns[i] = i
             un_mgd_rgns[i] = i
@@ -282,10 +242,7 @@ function make_mz(cfg)
                     return mgd_rgns[region]
                 end
             )
-
-            local dest = rgn[1]
-
-            local sources = slice(rgn, 2)
+            local dest, sources = rgn[1], slice(rgn, 2)
 
             for i = 1, cr_rgn do
                 if contains(sources, mgd_rgns[i]) then
@@ -350,8 +307,7 @@ function make_mz(cfg)
 
         while #dd_ends > exits do
             for _, pos in pairs(dd_ends) do
-                local x, y = pos.x, pos.y
-                local paths = {}
+                local x, y, paths = pos.x, pos.y, {}
                 for _, dir in pairs(dir.card) do
                     local ngbPos = {
                         x = x + dir.x,

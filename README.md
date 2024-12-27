@@ -13,12 +13,12 @@ This repository contains a dungeon generator for Pico-8. The generator creates r
 
 You can configure the dungeon generator by modifying the parameters in the code. The main parameters you can adjust are:
 
-- `method`: Determines the method used for dungeon generation. Options are:
+- `mth`: Determines the method used for dungeon generation. Options are:
   - `1`: Choose random
   - `2`: Choose oldest
   - `3`: Choose newest
-- `dungeonWidth`: The width of the dungeon.
-- `dungeonHeight`: The height of the dungeon.
+- `w`: The width of the dungeon.
+- `h`: The height of the dungeon.
 - `tries`: The number of rooms to try. The greater the number, the more rooms.
 - `xtrsz`: Additional size for rooms.
 - `xtrconn`: The chance of adding extra cons between rooms.

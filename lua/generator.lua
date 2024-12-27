@@ -7,7 +7,7 @@ function make_mz(cfg)
     -- Constants
     local draw, mth = cfg.draw or false, cfg.mth or 3
     local brd, w, h = cfg.hasbrd == false and 1 or 2, cfg.w or 128, cfg.h or 64
-    local mz_w, mz_h, chambers = w - brd, h - brd, {}
+    local mz_w, mz_h, chambers = w - 1, h - 1, {}
     local tries, xtrsz, xtrconn, exits = 1000, cfg.xtrsz or 1, cfg.xtrconn or 20, cfg.exits or 2
 
     -- Tiles

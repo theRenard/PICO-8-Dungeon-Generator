@@ -8,7 +8,7 @@ function _init()
   dungeon, chambers = make_mz({
     draw = true,
     mth = 2,
-    hasbrd = false,
+    hasbrd = true,
     w = dungeonWidth,
     h = dungeonHeight,
     xtrconn = 80,

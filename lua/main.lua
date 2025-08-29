@@ -1,7 +1,7 @@
 cls()
 
-local dungeonWidth = 128
-local dungeonHeight = 64
+local dungeonWidth = 32
+local dungeonHeight = 32
 local dungeon = {}
 
 function _init()

@@ -11,7 +11,7 @@ function _init()
     w = dungeonWidth,
     h = dungeonHeight,
     xtrconn = 80,
-    exits = 4
+    exits = 2
   })
   foreach_2darr(
     dungeon, function(x, y)

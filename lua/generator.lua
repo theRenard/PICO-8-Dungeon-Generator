@@ -1,10 +1,10 @@
--- Copyright (c) 2024 Daniele Tabanella under the MIT license
-
---2220
---17919
+--[[
+    - [Rooms and Mazes: A Procedural Dungeon Generator](https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/)
+    - [Maze Generation: Growing Tree Algorithm](https://weblog.jamisbuck.org/2011/1/27/maze-generation-growing-tree-algorithm)
+]]
 
 --[[
-    MAZE/DUNGEON GENERATOR
+    DUNGEON GENERATOR
 
     This function creates a procedural maze/dungeon with the following features:
     - Random room placement
@@ -12,6 +12,15 @@
     - Region connection to ensure all areas are accessible
     - Dead end removal to create more interesting layouts
     - Configurable parameters for size, complexity, and visual output
+]]
+
+--[[
+        TILE types:
+        - wl_tl: wall tile = 4
+        - flr_tl: floor tile = 0
+        - op_tl: open tile = 3
+        - csd_tl: closed tile = 8
+        - xt_tl: exit tile = 9
 ]]
 
 function make_mz(cfg)
@@ -35,7 +44,7 @@ function make_mz(cfg)
     --[[ TILE TYPES ]]
     -- wl_tl: wall tile, flr_tl: floor tile, op_tl: open tile
     -- csd_tl: closed tile, xt_tl: exit tile
-    local wl_tl, flr_tl, op_tl, csd_tl, xt_tl = cfg.wl_tl or 1, cfg.flr_tl or 7, cfg.op_tl or 12, cfg.csd_tl or 8, cfg.xt_tl or 9
+    local wl_tl, flr_tl, op_tl, csd_tl, xt_tl = cfg.wl_tl or 4, cfg.flr_tl or 0, cfg.op_tl or 3, cfg.csd_tl or 8, cfg.xt_tl or 9
 
     --[[ DATA STRUCTURES ]]
     -- mz: main maze array (contains tile types)

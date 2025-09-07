@@ -1,6 +1,6 @@
 # Dungeon Generator
 
-This repository contains a dungeon generator for Pico-8. The generator creates random dungeon layouts that can be used in various games.
+This repository contains a dungeon generator for PICO-8. The generator creates random dungeon layouts that can be used in various games.
 
 ![Dungeon Example 1](./assets/dungeon-generator.gif)
 
@@ -40,7 +40,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 Additionally, the code can be optimized by removing the drawing part, the debug part, and some utilities that are not essential for the core functionality of the dungeon generator. 
 
-Special thanks to the Pico-8 community for their support and inspiration. 
+Special thanks to the PICO-8 community for their support and inspiration. 
 
 ## References
 
